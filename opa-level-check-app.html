@@ -274,7 +274,7 @@ const LEVELS = [
     }}
 ];
 
-let supabase = null;
+let sb = null;
 let session = null;
 let currentLevelIdx = 2;
 let checks = {};
@@ -299,18 +299,18 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("configGate").classList.remove("hidden");
     return;
   }
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  supabase.auth.getSession().then(({data}) => {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  sb.auth.getSession().then(({data}) => {
     session = data.session;
     if(session) showApp(); else showLogin();
   });
-  supabase.auth.onAuthStateChange((_event, s) => {
+  sb.auth.onAuthStateChange((_event, s) => {
     session = s;
     if(session) showApp(); else showLogin();
   });
   document.getElementById("loginBtn").addEventListener("click", doLogin);
   document.getElementById("loginPassword").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
-  document.getElementById("signOutBtn").addEventListener("click", () => supabase.auth.signOut());
+  document.getElementById("signOutBtn").addEventListener("click", () => sb.auth.signOut());
 });
 
 function showLogin(){
@@ -331,7 +331,7 @@ async function doLogin(){
   const errEl = document.getElementById("loginError");
   errEl.textContent = "";
   if(!email || !password){ errEl.textContent = "Enter your email and password."; return; }
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await sb.auth.signInWithPassword({ email, password });
   if(error) errEl.textContent = error.message;
 }
 
@@ -502,7 +502,7 @@ async function saveEvaluation(){
     identifying_notes: document.getElementById("otherId").value.trim() || null
   };
   statusEl.textContent = "Saving...";
-  const { error } = await supabase.from("evaluations").insert(row);
+  const { error } = await sb.from("evaluations").insert(row);
   if(error){ statusEl.textContent = "Couldn't save: " + error.message; return; }
   statusEl.textContent = "Saved.";
   document.getElementById("notes").value = "";
@@ -512,7 +512,7 @@ async function saveEvaluation(){
 
 async function loadHistory(){
   const body = document.getElementById("historyBody");
-  const { data, error } = await supabase.from("evaluations").select("*").order("created_at", { ascending: false });
+  const { data, error } = await sb.from("evaluations").select("*").order("created_at", { ascending: false });
   if(error){ body.innerHTML = `<p class="empty">Couldn't load saved evaluations.</p>`; return; }
   if(!data || data.length === 0){ body.innerHTML = `<p class="empty">No evaluations saved yet.</p>`; return; }
 
@@ -565,7 +565,7 @@ function renderHistoryList(){
     `;
     if(canDelete){
       div.querySelector("button").addEventListener("click", async (e) => {
-        await supabase.from("evaluations").delete().eq("id", e.target.getAttribute("data-id"));
+        await sb.from("evaluations").delete().eq("id", e.target.getAttribute("data-id"));
         loadHistory();
       });
     }
