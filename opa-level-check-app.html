@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>OPA-APO Level Check</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#16232A; --ink-soft:#4B5A5E;
+    --bg:#F5F1E8; --surface:#FFFFFF; --surface-2:#EFEAE0; --line:#DDD5C2;
+    --court:#0E5C56; --court-dark:#0A3F3B; --court-light:#E4EFEC;
+    --good:#3F9D5D; --warn:#C7502E;
+    --violet:#7C5CBF; --indigo:#4A4FA5; --blue:#2E80C7; --green:#3F9D5D;
+    --yellow:#E0AC2A; --orange:#E2792E; --red:#D6483F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .app{max-width:640px;margin:0 auto;padding:0 0 48px;}
+
+  /* ---- Config gate ---- */
+  #configGate{max-width:420px;margin:60px auto;padding:24px;background:#fff;border:1px solid var(--line);border-radius:14px;}
+  #configGate h2{margin-top:0;font-size:16px;}
+  #configGate p{font-size:13px;color:var(--ink-soft);line-height:1.5;}
+  #configGate input{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;}
+  #configGate button{width:100%;}
+
+  /* ---- Login ---- */
+  #loginScreen{max-width:360px;margin:70px auto;padding:28px 24px;background:#fff;border:1px solid var(--line);border-radius:14px;text-align:center;}
+  #loginScreen h1{font-family:Arial Black,Arial,sans-serif;font-size:20px;text-transform:uppercase;color:var(--court-dark);margin-bottom:4px;}
+  #loginScreen p.sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;}
+  #loginScreen input{width:100%;margin-bottom:10px;padding:11px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:15px;background:var(--surface-2);}
+  #loginError{color:var(--warn);font-size:12.5px;margin-top:8px;min-height:16px;}
+
+  /* ---- Ladder header ---- */
+  .ladder-wrap{background:var(--court-dark);padding:14px 16px 14px;position:sticky;top:0;z-index:5;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .eyebrow{color:#BFE3DC;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin:0;}
+  .whoami{color:#BFE3DC;font-size:11.5px;}
+  .whoami button{background:none;border:none;color:#fff;text-decoration:underline;font-size:11.5px;padding:0;cursor:pointer;}
+  h1{color:#fff;font-family:Arial Black,Arial,sans-serif;font-weight:900;letter-spacing:-.02em;font-size:22px;margin:0 0 12px;text-transform:uppercase;}
+  .ladder{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+  .ladder::-webkit-scrollbar{display:none;}
+  .rung{flex:1 0 auto;min-width:52px;text-align:center;padding:8px 4px 7px;border-radius:8px;cursor:pointer;border:2px solid transparent;background:rgba(255,255,255,.08);transition:transform .15s ease,background .15s ease;}
+  .rung .dot{width:14px;height:14px;border-radius:50%;margin:0 auto 5px;box-shadow:0 0 0 2px rgba(255,255,255,.35) inset;}
+  .rung .lbl{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.75);}
+  .rung.active{background:rgba(255,255,255,.95);transform:translateY(-2px);}
+  .rung.active .lbl{color:var(--ink);}
+
+  main{padding:16px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .card h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:var(--court-dark);}
+  label.field-label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
+  input[type=text],input[type=email],input[type=password],textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:var(--ink);background:var(--surface-2);}
+  input:focus,textarea:focus{outline:2px solid var(--court);outline-offset:1px;background:#fff;}
+  textarea{resize:vertical;min-height:60px;}
+
+  .level-banner{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--court-light);}
+  .level-banner .swatch{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:0 0 0 3px #fff inset;}
+  .level-banner .name{font-weight:800;font-size:15px;}
+  .level-banner .sub{font-size:12px;color:var(--ink-soft);}
+
+  .cat-block{margin-bottom:14px;}
+  .cat-block:last-child{margin-bottom:0;}
+  .cat-title{font-size:12.5px;font-weight:800;color:var(--court);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .cat-count{font-weight:600;color:var(--ink-soft);text-transform:none;letter-spacing:0;font-size:11.5px;}
+  .crit{display:flex;gap:10px;align-items:flex-start;padding:9px 8px;border-radius:8px;cursor:pointer;}
+  .crit:active{background:var(--surface-2);}
+  .crit input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--court);}
+  .crit span{font-size:14.5px;line-height:1.35;}
+  .na{font-size:13px;color:var(--ink-soft);font-style:italic;padding:4px 8px;}
+
+  .result .verdict{font-size:17px;font-weight:800;margin-bottom:4px;}
+  .verdict.at{color:var(--good);}
+  .verdict.below{color:var(--warn);}
+  .verdict.ready{color:var(--court);}
+  .result .tally{font-size:13px;color:var(--ink-soft);margin-bottom:10px;}
+  .bar{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden;margin-bottom:12px;}
+  .bar-fill{height:100%;border-radius:5px;background:var(--court);transition:width .2s ease;}
+  .missed-list{font-size:13px;color:var(--ink-soft);margin:0;padding-left:18px;}
+  .missed-list li{margin-bottom:3px;}
+
+  button{font-family:inherit;font-size:14.5px;font-weight:700;border:none;border-radius:10px;padding:12px 16px;cursor:pointer;}
+  .btn-primary{background:var(--court);color:#fff;width:100%;}
+  .btn-primary:active{background:var(--court-dark);}
+  .btn-ghost{background:transparent;color:var(--warn);padding:6px 10px;font-size:12.5px;}
+
+  .filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .filter-row select{flex:1;min-width:120px;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:13px;background:var(--surface-2);}
+
+  .id-group{margin-bottom:14px;}
+  .id-group:last-child{margin-bottom:0;}
+  .chip-row{display:flex;gap:7px;flex-wrap:wrap;}
+  .color-chip{
+    display:flex;align-items:center;gap:6px;
+    padding:7px 11px 7px 7px;border-radius:99px;
+    border:1.5px solid var(--line);background:var(--surface-2);
+    cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink);
+  }
+  .color-chip .swatch{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,0.12) inset;}
+  .color-chip.selected{border-color:var(--court);background:var(--court-light);color:var(--court-dark);}
+  .tog-chip{
+    padding:7px 13px;border-radius:99px;border:1.5px solid var(--line);
+    background:var(--surface-2);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink);
+  }
+  .tog-chip.selected{border-color:var(--court);background:var(--court);color:#fff;}
+  .id-summary{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
+  .id-summary strong{color:var(--ink);}
+
+  .history-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .history-item:last-child{border-bottom:none;}
+  .history-item .name{font-weight:700;font-size:14.5px;}
+  .history-item .meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .history-item .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--court-light);color:var(--court-dark);margin-top:5px;}
+  .history-item .pill .dot{width:8px;height:8px;border-radius:50%;}
+  .empty{font-size:13px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  .status-msg{font-size:12px;color:var(--ink-soft);margin-top:8px;text-align:center;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<!-- Shown once, on first load, if Supabase keys aren't filled in below -->
+<div id="configGate" class="hidden">
+  <h2>Setup needed</h2>
+  <p>This page hasn't been connected to your Supabase project yet. Open this file in a text editor and fill in <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the &lt;script&gt; section, following SETUP-INSTRUCTIONS.md.</p>
+</div>
+
+<div id="loginScreen" class="hidden">
+  <h1>Player Level Check</h1>
+  <p class="sub">OPA-APO assessor sign in</p>
+  <input type="email" id="loginEmail" placeholder="Email" autocomplete="username">
+  <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+  <button class="btn-primary" id="loginBtn">Sign in</button>
+  <div id="loginError"></div>
+</div>
+
+<div class="app hidden" id="mainApp">
+  <div class="ladder-wrap">
+    <div class="topbar">
+      <p class="eyebrow">OPA-APO &middot; League Levels</p>
+      <div class="whoami"><span id="whoamiEmail"></span> &middot; <button id="signOutBtn">Sign out</button></div>
+    </div>
+    <h1>Player Level Check</h1>
+    <div class="ladder" id="ladder"></div>
+  </div>
+
+  <main>
+    <section class="card">
+      <h2>Player &amp; level</h2>
+      <label class="field-label" for="playerName">Player name</label>
+      <input type="text" id="playerName" placeholder="e.g. Sam Tremblay">
+      <div class="level-banner">
+        <div class="swatch" id="bannerSwatch"></div>
+        <div>
+          <div class="name" id="bannerName"></div>
+          <div class="sub">Assessing against this level's criteria</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Identify this player</h2>
+      <div class="id-group">
+        <label class="field-label">Shirt colour</label>
+        <div class="chip-row" id="shirtChips"></div>
+      </div>
+      <div class="id-group">
+        <label class="field-label">Shorts / bottoms colour</label>
+        <div class="chip-row" id="shortsChips"></div>
+      </div>
+      <div class="id-group">
+        <label class="field-label">Other identifiers</label>
+        <div class="chip-row" id="accessoryChips"></div>
+      </div>
+      <div class="id-group">
+        <label class="field-label" for="otherId">Anything else distinctive</label>
+        <input type="text" id="otherId" placeholder="e.g. red headband, left-handed, tall">
+      </div>
+      <div class="id-summary" id="idSummary"></div>
+    </section>
+
+    <section class="card" id="criteriaCard">
+      <h2>Criteria observed in real play</h2>
+      <div id="criteriaBody"></div>
+    </section>
+
+    <section class="card result" id="resultCard">
+      <h2>Result</h2>
+      <div id="resultBody"></div>
+    </section>
+
+    <section class="card">
+      <h2>Notes (optional)</h2>
+      <textarea id="notes" placeholder="Anything specific worth remembering — a weak backhand, great third-shot drop, etc."></textarea>
+      <div style="margin-top:12px;">
+        <button class="btn-primary" id="saveBtn">Save evaluation</button>
+      </div>
+      <div class="status-msg" id="statusMsg"></div>
+    </section>
+
+    <section class="card">
+      <h2>Saved evaluations</h2>
+      <div class="filter-row">
+        <select id="filterAssessor"><option value="">All assessors</option></select>
+        <select id="filterPlayer"><option value="">All players</option></select>
+      </div>
+      <div id="historyBody"><p class="empty">Loading...</p></div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   1) FILL THESE IN — see SETUP-INSTRUCTIONS.md
+   ========================================================= */
+const SUPABASE_URL = "https://wfefudxjnuhkhwsbrjoa.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmZWZ1ZHhqbnVoa2h3c2Jyam9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5OTg4NTcsImV4cCI6MjEwMjU3NDg1N30.zuK30U77QUCFCQ01_RMZomdRV9RyHbK1tNkYu7eTvOw";
+/* ========================================================= */
+
+const LEVELS = [
+  { id:"violet", name:"Violet — Learn to Play", color:"var(--violet)",
+    categories:{
+      "General Play":["Learning the rules and scoring","Learning the basic shots (serve, return, third shot, dink, volley)"],
+      "Positioning":["Learning basic positioning"], "Fast Game":null, "Slow Game":null, "Strategy":null
+    }},
+  { id:"indigo", name:"Indigo", color:"var(--indigo)",
+    categories:{
+      "General Play":["Knows the basic rules of pickleball and how to keep score","Serves and returns in court 50% of the time","Maintains a rally of 3 shots (groundstrokes, volleys, dinks)"],
+      "Positioning":["Knows correct position for serve, return and during game play","Beginning to move to the No Volley Line (NVL) after the third shot"],
+      "Fast Game":["Can volley the ball over the net (30% of the time)"],
+      "Slow Game":["Knows how to dink and when to use this shot at the NVL"], "Strategy":null
+    }},
+  { id:"blue", name:"Blue", color:"var(--blue)",
+    categories:{
+      "General Play":["Serves and returns in court 60% of the time, and attempts to serve and return deep","Rarely \u201cswing and miss\u201d","Uses forehand and backhand appropriately","Maintains a rally of 5 shots (groundstrokes, volleys, dinks)"],
+      "Positioning":["Consistently moves to the NVL when the chance is there after the third shot — does not back off the NVL too often","Beginning to move with partner for correct court positioning (up/back and side/side)"],
+      "Fast Game":["Handles moderate pace — drives, volleys, speed ups handled more than 33% of the time"],
+      "Slow Game":["Beginning to initiate a dink rally and dinks as much as possible until pop ups","Beginning to keep ball low and limit pop-ups","Uses third shot drop on easy returns"],
+      "Strategy":["General game concepts (e.g. deep serve — deep return — drop for first three shots)","Beginning to limit unforced errors"]
+    }},
+  { id:"green", name:"Green", color:"var(--green)",
+    categories:{
+      "General Play":["Serves and returns deep in the back third of the court 60% of the time"],
+      "Positioning":["Moves to the No Volley Line (NVL) appropriately under control","Stays at the NVL (backs off only when appropriate)","Has reasonable (50% of the time) court positioning for doubles (moves with partner at NVL, allowing only a small gap between partners)"],
+      "Fast Game":["Sustains a volley exchange at the net","Able to handle fast pace — drives or speed-ups more than 50% of the time","Able to use an overhead with control 60% of the time"],
+      "Slow Game":["Uses the third shot drop and is successful 50% of the time (ball is unattackable — opponent has to hit upward or softly off a bounce)","Initiates and maintains a dink rally of 5-6 dinks in a game situation","Beginning to dink with placement and purpose","Keeps balls low and limits pop-ups","Attempting to reset balls when moving through the transition zone (slow balls that have some arc)"],
+      "Strategy":["Beginning to limit low percentage shots and unforced errors","Beginning to develop patience during a rally and not forcing shots or speed-ups"]
+    }},
+  { id:"yellow", name:"Yellow", color:"var(--yellow)",
+    categories:{
+      "General Play":["Serves and returns with depth and/or placement 80% of the time","Beginning to communicate with partner throughout play"],
+      "Positioning":["Has good court coverage","Has correct court positioning for doubles (75% of the time)"],
+      "Fast Game":["Sustains a rally and places ball during a volley exchange","Handles drives and speed-ups at the net with appropriate counter, block or reset volley (60% of the time)","Uses third shot drive only when appropriate","Has a variety of finishing shots (successful 75% of the time)"],
+      "Slow Game":["Uses the third shot drop appropriately and successfully 60% of the time","Consistently dinks with good placement and purpose with few unforced pop ups","Resets the ball at the NVL and in the Transition Zone (TZ) to start a dink rally successfully 50% of the time","Tries to change the pace of the game (fast to slow)"],
+      "Strategy":["Understands proper shot selection and is reducing the number of low percentage shots (has developed patience)","Limits unforced errors — fewer than 25% of rallies end because of an unforced error","Creates and hits \u201cgaps\u201d","Controls play at the net to keep opponents deep"]
+    }},
+  { id:"orange", name:"Orange", color:"var(--orange)",
+    categories:{
+      "General Play":["Serves and returns with accurate placement and depth 85% of the time"],
+      "Positioning":["Moves effectively with partner, easily switching sides and covering the court","Has correct court positioning for doubles (85% of the time)"],
+      "Fast Game":["Third shot drive is only used when appropriate and is strategically placed and effective 60% of the time","Controls play at the net to keep opponents deep","Speeds up play at the NVL only when appropriate","Handles fast exchanges at the net with appropriate counter, block or reset volleys (75% of the time)","Has a variety of finishing shots (successful 90% of the time)"],
+      "Slow Game":["Third shot drop is strategically placed and effective 75% of the time","Resets the ball at the NVL and in the Transition Zone to start a dink rally 75% of the time","Consistently dinks with different speeds and depths, knowing when to use offensive and defensive dinks"],
+      "Strategy":["Keeps the ball in play and is aware of minimizing errors","Executes proper shot selection and reduces the number of low percentage shots","Fewer than 20% of rallies end because of unforced errors","Controls the pace of the game appropriately","Anticipates opponent's shots (gets paddle on ball using good footwork and body position, not reaching or being reactive)"]
+    }},
+  { id:"red", name:"Red", color:"var(--red)",
+    categories:{
+      "General Play":["Serves and returns with placement, power or spin 95% of the time","Does not have a noticeable weakness that can be exploited","Is competent in all areas of the game"],
+      "Positioning":["Has excellent positioning, anticipation and mobility (95% of the time)"],
+      "Fast Game":["Has quick hands — handles fast exchanges at the net with appropriate counter, block or reset volleys (90% of the time)","Consistently hits an effective third shot drive or spin shot 90% of the time"],
+      "Slow Game":["Can dink all day long with accuracy, spin and variety","Purposely resets fast-paced balls","Retrieves lobs and resets them to the team's advantage","Consistently hits an effective third shot drop 90% of the time"],
+      "Strategy":["Understands pickleball strategies and can vary strategies based on opponents","Able to turn many defensive shots into offensive shots","Fewer than 10% (1 out of 10) of rallies end because of unforced errors"]
+    }}
+];
+
+let supabase = null;
+let session = null;
+let currentLevelIdx = 2;
+let checks = {};
+
+const COLOR_OPTIONS = [
+  {label:"Black", hex:"#222222"}, {label:"White", hex:"#FFFFFF"},
+  {label:"Grey", hex:"#9AA0A6"}, {label:"Navy", hex:"#1F3A5F"},
+  {label:"Blue", hex:"#2E80C7"}, {label:"Red", hex:"#D6483F"},
+  {label:"Green", hex:"#3F9D5D"}, {label:"Yellow", hex:"#E0AC2A"},
+  {label:"Orange", hex:"#E2792E"}, {label:"Purple", hex:"#7C5CBF"},
+  {label:"Pink", hex:"#E06BA0"}, {label:"Teal", hex:"#0E5C56"}
+];
+const ACCESSORY_OPTIONS = ["Glasses","Hat/Visor","Long sleeves","Knee brace","Ankle brace","Sleeve/arm compression"];
+
+let selectedShirt = null;
+let selectedShorts = null;
+let selectedAccessories = new Set();
+
+/* ---------- Boot ---------- */
+window.addEventListener("DOMContentLoaded", () => {
+  if(!SUPABASE_URL || SUPABASE_URL.indexOf("YOUR_SUPABASE_URL") === 0){
+    document.getElementById("configGate").classList.remove("hidden");
+    return;
+  }
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabase.auth.getSession().then(({data}) => {
+    session = data.session;
+    if(session) showApp(); else showLogin();
+  });
+  supabase.auth.onAuthStateChange((_event, s) => {
+    session = s;
+    if(session) showApp(); else showLogin();
+  });
+  document.getElementById("loginBtn").addEventListener("click", doLogin);
+  document.getElementById("loginPassword").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
+  document.getElementById("signOutBtn").addEventListener("click", () => supabase.auth.signOut());
+});
+
+function showLogin(){
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("mainApp").classList.add("hidden");
+}
+function showApp(){
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("mainApp").classList.remove("hidden");
+  document.getElementById("whoamiEmail").textContent = session.user.email;
+  renderAll();
+  loadHistory();
+}
+
+async function doLogin(){
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const errEl = document.getElementById("loginError");
+  errEl.textContent = "";
+  if(!email || !password){ errEl.textContent = "Enter your email and password."; return; }
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if(error) errEl.textContent = error.message;
+}
+
+/* ---------- Rendering (same logic as the single-user version) ---------- */
+function renderLadder(){
+  const el = document.getElementById("ladder");
+  el.innerHTML = "";
+  LEVELS.forEach((lvl, i) => {
+    const rung = document.createElement("div");
+    rung.className = "rung" + (i === currentLevelIdx ? " active" : "");
+    rung.innerHTML = `<div class="dot" style="background:${lvl.color}"></div><div class="lbl">${lvl.name.split(" —")[0].split(" ")[0]}</div>`;
+    rung.onclick = () => { currentLevelIdx = i; checks = {}; renderAll(); };
+    el.appendChild(rung);
+  });
+}
+function renderBanner(){
+  const lvl = LEVELS[currentLevelIdx];
+  document.getElementById("bannerSwatch").style.background = lvl.color;
+  document.getElementById("bannerName").textContent = lvl.name;
+}
+function renderCriteria(){
+  const lvl = LEVELS[currentLevelIdx];
+  const body = document.getElementById("criteriaBody");
+  body.innerHTML = "";
+  Object.entries(lvl.categories).forEach(([cat, items]) => {
+    const block = document.createElement("div");
+    block.className = "cat-block";
+    if(!items){
+      block.innerHTML = `<div class="cat-title">${cat}</div><div class="na">Not assessed at this level</div>`;
+      body.appendChild(block);
+      return;
+    }
+    const checkedCount = items.filter((_, idx) => checks[cat+"-"+idx]).length;
+    block.innerHTML = `<div class="cat-title">${cat} <span class="cat-count">(${checkedCount}/${items.length})</span></div>`;
+    items.forEach((text, idx) => {
+      const key = cat + "-" + idx;
+      const row = document.createElement("label");
+      row.className = "crit";
+      row.innerHTML = `<input type="checkbox" ${checks[key] ? "checked" : ""}><span>${text}</span>`;
+      row.querySelector("input").addEventListener("change", (e) => {
+        checks[key] = e.target.checked;
+        renderCriteria();
+        renderResult();
+      });
+      block.appendChild(row);
+    });
+    body.appendChild(block);
+  });
+}
+function computeResult(){
+  const lvl = LEVELS[currentLevelIdx];
+  let total = 0, checked = 0;
+  const missed = [];
+  Object.entries(lvl.categories).forEach(([cat, items]) => {
+    if(!items) return;
+    items.forEach((text, idx) => {
+      total++;
+      if(checks[cat+"-"+idx]) checked++;
+      else missed.push(cat + ": " + text);
+    });
+  });
+  const missedCount = total - checked;
+  let verdictClass, verdictText;
+  if(total === 0){ verdictClass = "at"; verdictText = "No criteria to assess at this level"; }
+  else if(missedCount === 0){
+    verdictClass = "ready";
+    const next = LEVELS[currentLevelIdx+1];
+    verdictText = next ? `Meets all ${lvl.name} criteria — try assessing at ${next.name}` : `Meets all ${lvl.name} criteria — top level`;
+  } else if(missedCount === 1){ verdictClass = "at"; verdictText = `At ${lvl.name} level`; }
+  else {
+    verdictClass = "below";
+    const prev = LEVELS[currentLevelIdx-1];
+    verdictText = prev ? `Not yet at ${lvl.name} — recommend ${prev.name}` : `Still developing ${lvl.name} skills`;
+  }
+  return { total, checked, missedCount, missed, verdictClass, verdictText };
+}
+function renderResult(){
+  const r = computeResult();
+  const body = document.getElementById("resultBody");
+  const pct = r.total ? Math.round((r.checked/r.total)*100) : 0;
+  let html = `<div class="verdict ${r.verdictClass}">${r.verdictText}</div>`;
+  if(r.total){
+    html += `<div class="tally">${r.checked} of ${r.total} criteria met &middot; missing more than one means the previous level is the better fit</div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>`;
+  }
+  if(r.missed.length){
+    html += `<div style="font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;">Not yet demonstrated</div>`;
+    html += `<ul class="missed-list">` + r.missed.map(m => `<li>${m}</li>`).join("") + `</ul>`;
+  }
+  body.innerHTML = html;
+}
+function renderAll(){ renderLadder(); renderBanner(); renderCriteria(); renderResult(); renderIdChips(); }
+
+function renderIdChips(){
+  const shirtEl = document.getElementById("shirtChips");
+  const shortsEl = document.getElementById("shortsChips");
+  const accEl = document.getElementById("accessoryChips");
+
+  shirtEl.innerHTML = "";
+  COLOR_OPTIONS.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "color-chip" + (selectedShirt === c.label ? " selected" : "");
+    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
+    chip.onclick = () => { selectedShirt = (selectedShirt === c.label) ? null : c.label; renderIdChips(); };
+    shirtEl.appendChild(chip);
+  });
+
+  shortsEl.innerHTML = "";
+  COLOR_OPTIONS.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "color-chip" + (selectedShorts === c.label ? " selected" : "");
+    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
+    chip.onclick = () => { selectedShorts = (selectedShorts === c.label) ? null : c.label; renderIdChips(); };
+    shortsEl.appendChild(chip);
+  });
+
+  accEl.innerHTML = "";
+  ACCESSORY_OPTIONS.forEach(a => {
+    const chip = document.createElement("div");
+    chip.className = "tog-chip" + (selectedAccessories.has(a) ? " selected" : "");
+    chip.textContent = a;
+    chip.onclick = () => {
+      if(selectedAccessories.has(a)) selectedAccessories.delete(a); else selectedAccessories.add(a);
+      renderIdChips();
+    };
+    accEl.appendChild(chip);
+  });
+
+  const other = document.getElementById("otherId").value.trim();
+  const parts = [];
+  if(selectedShirt) parts.push(selectedShirt + " shirt");
+  if(selectedShorts) parts.push(selectedShorts + " shorts");
+  if(selectedAccessories.size) parts.push([...selectedAccessories].join(", "));
+  if(other) parts.push(other);
+  document.getElementById("idSummary").innerHTML = parts.length
+    ? `<strong>Identifying as:</strong> ${parts.join(" · ")}`
+    : "Tap the colours and features that match this player.";
+}
+
+function resetIdFields(){
+  selectedShirt = null;
+  selectedShorts = null;
+  selectedAccessories = new Set();
+  document.getElementById("otherId").value = "";
+  renderIdChips();
+}
+
+/* ---------- Persistence (Supabase, shared across all assessors) ---------- */
+async function saveEvaluation(){
+  const name = document.getElementById("playerName").value.trim();
+  const statusEl = document.getElementById("statusMsg");
+  if(!name){ statusEl.textContent = "Add a player name before saving."; return; }
+  const lvl = LEVELS[currentLevelIdx];
+  const r = computeResult();
+  const row = {
+    assessor_id: session.user.id,
+    assessor_email: session.user.email,
+    player: name,
+    level_id: lvl.id,
+    level_name: lvl.name,
+    checked: r.checked,
+    total: r.total,
+    verdict: r.verdictText,
+    notes: document.getElementById("notes").value.trim(),
+    shirt_color: selectedShirt,
+    shorts_color: selectedShorts,
+    accessories: selectedAccessories.size ? [...selectedAccessories].join(", ") : null,
+    identifying_notes: document.getElementById("otherId").value.trim() || null
+  };
+  statusEl.textContent = "Saving...";
+  const { error } = await supabase.from("evaluations").insert(row);
+  if(error){ statusEl.textContent = "Couldn't save: " + error.message; return; }
+  statusEl.textContent = "Saved.";
+  document.getElementById("notes").value = "";
+  resetIdFields();
+  loadHistory();
+}
+
+async function loadHistory(){
+  const body = document.getElementById("historyBody");
+  const { data, error } = await supabase.from("evaluations").select("*").order("created_at", { ascending: false });
+  if(error){ body.innerHTML = `<p class="empty">Couldn't load saved evaluations.</p>`; return; }
+  if(!data || data.length === 0){ body.innerHTML = `<p class="empty">No evaluations saved yet.</p>`; return; }
+
+  // populate filters
+  const assessorSel = document.getElementById("filterAssessor");
+  const playerSel = document.getElementById("filterPlayer");
+  const assessors = [...new Set(data.map(d => d.assessor_email))].sort();
+  const players = [...new Set(data.map(d => d.player))].sort();
+  const curA = assessorSel.value, curP = playerSel.value;
+  assessorSel.innerHTML = `<option value="">All assessors</option>` + assessors.map(a => `<option value="${a}">${a}</option>`).join("");
+  playerSel.innerHTML = `<option value="">All players</option>` + players.map(p => `<option value="${p}">${p}</option>`).join("");
+  assessorSel.value = curA; playerSel.value = curP;
+  assessorSel.onchange = renderHistoryList;
+  playerSel.onchange = renderHistoryList;
+
+  window._allEvals = data;
+  renderHistoryList();
+}
+
+function renderHistoryList(){
+  const body = document.getElementById("historyBody");
+  const aFilter = document.getElementById("filterAssessor").value;
+  const pFilter = document.getElementById("filterPlayer").value;
+  let data = window._allEvals || [];
+  if(aFilter) data = data.filter(d => d.assessor_email === aFilter);
+  if(pFilter) data = data.filter(d => d.player === pFilter);
+  if(data.length === 0){ body.innerHTML = `<p class="empty">No matching evaluations.</p>`; return; }
+  body.innerHTML = "";
+  data.forEach(entry => {
+    const lvl = LEVELS.find(l => l.id === entry.level_id) || {color:"#999"};
+    const div = document.createElement("div");
+    div.className = "history-item";
+    const d = new Date(entry.created_at);
+    const dateStr = d.toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+    const canDelete = session && entry.assessor_id === session.user.id;
+    const idParts = [];
+    if(entry.shirt_color) idParts.push(entry.shirt_color + " shirt");
+    if(entry.shorts_color) idParts.push(entry.shorts_color + " shorts");
+    if(entry.accessories) idParts.push(entry.accessories);
+    if(entry.identifying_notes) idParts.push(entry.identifying_notes);
+    div.innerHTML = `
+      <div>
+        <div class="name">${entry.player}</div>
+        <div class="meta">${dateStr} &middot; by ${entry.assessor_email} &middot; ${entry.checked}/${entry.total} criteria &middot; ${entry.verdict}</div>
+        ${idParts.length ? `<div class="meta">${idParts.join(" · ")}</div>` : ""}
+        ${entry.notes ? `<div class="meta">${entry.notes}</div>` : ""}
+        <div class="pill"><span class="dot" style="background:${lvl.color}"></span>${entry.level_name}</div>
+      </div>
+      ${canDelete ? `<button class="btn-ghost" data-id="${entry.id}">Delete</button>` : ""}
+    `;
+    if(canDelete){
+      div.querySelector("button").addEventListener("click", async (e) => {
+        await supabase.from("evaluations").delete().eq("id", e.target.getAttribute("data-id"));
+        loadHistory();
+      });
+    }
+    body.appendChild(div);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("saveBtn").addEventListener("click", saveEvaluation);
+  document.getElementById("otherId").addEventListener("input", renderIdChips);
+});
+</script>
+</body>
+</html>
