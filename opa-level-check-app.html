@@ -108,6 +108,15 @@
   .id-summary{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
   .id-summary strong{color:var(--ink);}
 
+  .level-picker{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-top:8px;scrollbar-width:none;}
+  .level-picker::-webkit-scrollbar{display:none;}
+  .level-chip{flex:0 0 auto;min-width:50px;text-align:center;padding:7px 4px 6px;border-radius:8px;cursor:pointer;border:2px solid var(--line);background:var(--surface-2);}
+  .level-chip .dot{width:12px;height:12px;border-radius:50%;margin:0 auto 4px;box-shadow:0 0 0 1px rgba(0,0,0,.1) inset;}
+  .level-chip .lbl{font-size:9px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);}
+  .level-chip.selected{border-color:var(--court);background:var(--court);}
+  .level-chip.selected .lbl{color:#fff;}
+  .override-note{font-size:11.5px;color:var(--ink-soft);margin-top:7px;}
+
   .history-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);}
   .history-item:last-child{border-bottom:none;}
   .history-item .name{font-weight:700;font-size:14.5px;}
@@ -189,6 +198,9 @@
     <section class="card result" id="resultCard">
       <h2>Result</h2>
       <div id="resultBody"></div>
+      <label class="field-label" style="margin-top:14px;">Assessor's determined level</label>
+      <div class="level-picker" id="levelPicker"></div>
+      <div class="override-note" id="overrideNote"></div>
     </section>
 
     <section class="card">
@@ -293,6 +305,14 @@ let selectedShirt = null;
 let selectedShorts = null;
 let selectedAccessories = new Set();
 
+let assessorLevelIdx = 2;
+let manualLevelOverride = false;
+
+function suggestedLevelIdx(pct){
+  if(pct >= 0.7) return currentLevelIdx;
+  return currentLevelIdx > 0 ? currentLevelIdx - 1 : currentLevelIdx;
+}
+
 /* ---------- Boot ---------- */
 window.addEventListener("DOMContentLoaded", () => {
   if(!SUPABASE_URL || SUPABASE_URL.indexOf("YOUR_SUPABASE_URL") === 0){
@@ -343,7 +363,7 @@ function renderLadder(){
     const rung = document.createElement("div");
     rung.className = "rung" + (i === currentLevelIdx ? " active" : "");
     rung.innerHTML = `<div class="dot" style="background:${lvl.color}"></div><div class="lbl">${lvl.name.split(" —")[0].split(" ")[0]}</div>`;
-    rung.onclick = () => { currentLevelIdx = i; checks = {}; renderAll(); };
+    rung.onclick = () => { currentLevelIdx = i; checks = {}; manualLevelOverride = false; renderAll(); };
     el.appendChild(rung);
   });
 }
@@ -394,19 +414,23 @@ function computeResult(){
     });
   });
   const missedCount = total - checked;
+  const pct = total ? checked / total : 0;
   let verdictClass, verdictText;
-  if(total === 0){ verdictClass = "at"; verdictText = "No criteria to assess at this level"; }
-  else if(missedCount === 0){
+  if(total === 0){
+    verdictClass = "at"; verdictText = "No criteria to assess at this level";
+  } else if(pct === 1){
     verdictClass = "ready";
     const next = LEVELS[currentLevelIdx+1];
     verdictText = next ? `Meets all ${lvl.name} criteria — try assessing at ${next.name}` : `Meets all ${lvl.name} criteria — top level`;
-  } else if(missedCount === 1){ verdictClass = "at"; verdictText = `At ${lvl.name} level`; }
-  else {
+  } else if(pct >= 0.7){
+    verdictClass = "at";
+    verdictText = `At ${lvl.name} level`;
+  } else {
     verdictClass = "below";
     const prev = LEVELS[currentLevelIdx-1];
     verdictText = prev ? `Not yet at ${lvl.name} — recommend ${prev.name}` : `Still developing ${lvl.name} skills`;
   }
-  return { total, checked, missedCount, missed, verdictClass, verdictText };
+  return { total, checked, missedCount, pct, missed, verdictClass, verdictText };
 }
 function renderResult(){
   const r = computeResult();
@@ -414,7 +438,7 @@ function renderResult(){
   const pct = r.total ? Math.round((r.checked/r.total)*100) : 0;
   let html = `<div class="verdict ${r.verdictClass}">${r.verdictText}</div>`;
   if(r.total){
-    html += `<div class="tally">${r.checked} of ${r.total} criteria met &middot; missing more than one means the previous level is the better fit</div>`;
+    html += `<div class="tally">${r.checked} of ${r.total} criteria met (${pct}%) &middot; 70% or more is a pass at this level</div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>`;
   }
   if(r.missed.length){
@@ -422,6 +446,28 @@ function renderResult(){
     html += `<ul class="missed-list">` + r.missed.map(m => `<li>${m}</li>`).join("") + `</ul>`;
   }
   body.innerHTML = html;
+
+  if(!manualLevelOverride){
+    assessorLevelIdx = suggestedLevelIdx(r.pct);
+  }
+  renderLevelPicker(r);
+}
+
+function renderLevelPicker(r){
+  const el = document.getElementById("levelPicker");
+  el.innerHTML = "";
+  LEVELS.forEach((lvl, i) => {
+    const chip = document.createElement("div");
+    chip.className = "level-chip" + (i === assessorLevelIdx ? " selected" : "");
+    chip.innerHTML = `<div class="dot" style="background:${lvl.color}"></div><div class="lbl">${lvl.name.split(" —")[0].split(" ")[0]}</div>`;
+    chip.onclick = () => { assessorLevelIdx = i; manualLevelOverride = true; renderResult(); };
+    el.appendChild(chip);
+  });
+  const note = document.getElementById("overrideNote");
+  const suggestedIdx = suggestedLevelIdx(r.pct);
+  note.textContent = manualLevelOverride
+    ? `Manually set to ${LEVELS[assessorLevelIdx].name} — checklist suggested ${LEVELS[suggestedIdx].name}`
+    : `Auto-suggested from the checklist. Tap a level to set your own call.`;
 }
 function renderAll(){ renderLadder(); renderBanner(); renderCriteria(); renderResult(); renderIdChips(); }
 
@@ -499,7 +545,10 @@ async function saveEvaluation(){
     shirt_color: selectedShirt,
     shorts_color: selectedShorts,
     accessories: selectedAccessories.size ? [...selectedAccessories].join(", ") : null,
-    identifying_notes: document.getElementById("otherId").value.trim() || null
+    identifying_notes: document.getElementById("otherId").value.trim() || null,
+    determined_level_id: LEVELS[assessorLevelIdx].id,
+    determined_level_name: LEVELS[assessorLevelIdx].name,
+    level_overridden: manualLevelOverride
   };
   statusEl.textContent = "Saving...";
   const { error } = await sb.from("evaluations").insert(row);
@@ -507,6 +556,8 @@ async function saveEvaluation(){
   statusEl.textContent = "Saved.";
   document.getElementById("notes").value = "";
   resetIdFields();
+  manualLevelOverride = false;
+  renderResult();
   loadHistory();
 }
 
@@ -553,13 +604,17 @@ function renderHistoryList(){
     if(entry.shorts_color) idParts.push(entry.shorts_color + " shorts");
     if(entry.accessories) idParts.push(entry.accessories);
     if(entry.identifying_notes) idParts.push(entry.identifying_notes);
+    const detLvl = LEVELS.find(l => l.id === entry.determined_level_id);
     div.innerHTML = `
       <div>
         <div class="name">${entry.player}</div>
         <div class="meta">${dateStr} &middot; by ${entry.assessor_email} &middot; ${entry.checked}/${entry.total} criteria &middot; ${entry.verdict}</div>
         ${idParts.length ? `<div class="meta">${idParts.join(" · ")}</div>` : ""}
         ${entry.notes ? `<div class="meta">${entry.notes}</div>` : ""}
-        <div class="pill"><span class="dot" style="background:${lvl.color}"></span>${entry.level_name}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <div class="pill"><span class="dot" style="background:${lvl.color}"></span>Assessed at ${entry.level_name}</div>
+          ${detLvl ? `<div class="pill"><span class="dot" style="background:${detLvl.color}"></span>Determined: ${entry.determined_level_name}${entry.level_overridden ? " (adjusted)" : ""}</div>` : ""}
+        </div>
       </div>
       ${canDelete ? `<button class="btn-ghost" data-id="${entry.id}">Delete</button>` : ""}
     `;
