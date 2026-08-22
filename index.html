@@ -71,6 +71,11 @@
   .crit span{font-size:14.5px;line-height:1.35;}
   .na{font-size:13px;color:var(--ink-soft);font-style:italic;padding:4px 8px;}
 
+  .comment-row{margin-top:8px;padding:0 8px;}
+  .comment-row label{display:block;font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+  .comment-select{width:100%;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:13.5px;background:var(--surface-2);color:var(--ink);font-family:inherit;}
+  .comment-select:focus{outline:2px solid var(--court);outline-offset:1px;background:#fff;}
+
   .result .verdict{font-size:17px;font-weight:800;margin-bottom:4px;}
   .verdict.at{color:var(--good);}
   .verdict.below{color:var(--warn);}
@@ -301,6 +306,23 @@ const COLOR_OPTIONS = [
 ];
 const ACCESSORY_OPTIONS = ["Glasses","Hat/Visor","Long sleeves","Knee brace","Ankle brace","Sleeve/arm compression"];
 
+const PRESET_COMMENTS = [
+  "Consistent and reliable",
+  "Developing well, needs more repetition",
+  "Strong under pressure",
+  "Inconsistent execution",
+  "Excellent shot selection",
+  "Not observed during this session",
+  "Exceeds expectations for this level",
+  "Struggles when rushed",
+  "Great court awareness",
+  "Needs to slow down and reset more often",
+  "Good communication with partner",
+  "Hesitant / lacks confidence in this area"
+];
+
+let categoryComments = {};
+
 let selectedShirt = null;
 let selectedShorts = null;
 let selectedAccessories = new Set();
@@ -308,8 +330,8 @@ let selectedAccessories = new Set();
 let assessorLevelIdx = 2;
 let manualLevelOverride = false;
 
-function suggestedLevelIdx(missedCount){
-  if(missedCount <= 1) return currentLevelIdx;
+function suggestedLevelIdx(pct){
+  if(pct >= 0.7) return currentLevelIdx;
   return currentLevelIdx > 0 ? currentLevelIdx - 1 : currentLevelIdx;
 }
 
@@ -363,7 +385,7 @@ function renderLadder(){
     const rung = document.createElement("div");
     rung.className = "rung" + (i === currentLevelIdx ? " active" : "");
     rung.innerHTML = `<div class="dot" style="background:${lvl.color}"></div><div class="lbl">${lvl.name.split(" —")[0].split(" ")[0]}</div>`;
-    rung.onclick = () => { currentLevelIdx = i; checks = {}; manualLevelOverride = false; renderAll(); };
+    rung.onclick = () => { currentLevelIdx = i; checks = {}; categoryComments = {}; manualLevelOverride = false; renderAll(); };
     el.appendChild(rung);
   });
 }
@@ -398,6 +420,18 @@ function renderCriteria(){
       });
       block.appendChild(row);
     });
+
+    const commentWrap = document.createElement("div");
+    commentWrap.className = "comment-row";
+    const currentComment = categoryComments[cat] || "";
+    const options = [`<option value="">— Select a comment —</option>`]
+      .concat(PRESET_COMMENTS.map(c => `<option value="${c}"${currentComment === c ? " selected" : ""}>${c}</option>`));
+    commentWrap.innerHTML = `<label>Comment on ${cat}</label><select class="comment-select">${options.join("")}</select>`;
+    commentWrap.querySelector("select").addEventListener("change", (e) => {
+      categoryComments[cat] = e.target.value;
+    });
+    block.appendChild(commentWrap);
+
     body.appendChild(block);
   });
 }
@@ -414,19 +448,23 @@ function computeResult(){
     });
   });
   const missedCount = total - checked;
+  const pct = total ? checked / total : 0;
   let verdictClass, verdictText;
-  if(total === 0){ verdictClass = "at"; verdictText = "No criteria to assess at this level"; }
-  else if(missedCount === 0){
+  if(total === 0){
+    verdictClass = "at"; verdictText = "No criteria to assess at this level";
+  } else if(pct === 1){
     verdictClass = "ready";
     const next = LEVELS[currentLevelIdx+1];
     verdictText = next ? `Meets all ${lvl.name} criteria — try assessing at ${next.name}` : `Meets all ${lvl.name} criteria — top level`;
-  } else if(missedCount === 1){ verdictClass = "at"; verdictText = `At ${lvl.name} level`; }
-  else {
+  } else if(pct >= 0.7){
+    verdictClass = "at";
+    verdictText = `At ${lvl.name} level`;
+  } else {
     verdictClass = "below";
     const prev = LEVELS[currentLevelIdx-1];
     verdictText = prev ? `Not yet at ${lvl.name} — recommend ${prev.name}` : `Still developing ${lvl.name} skills`;
   }
-  return { total, checked, missedCount, missed, verdictClass, verdictText };
+  return { total, checked, missedCount, pct, missed, verdictClass, verdictText };
 }
 function renderResult(){
   const r = computeResult();
@@ -434,7 +472,7 @@ function renderResult(){
   const pct = r.total ? Math.round((r.checked/r.total)*100) : 0;
   let html = `<div class="verdict ${r.verdictClass}">${r.verdictText}</div>`;
   if(r.total){
-    html += `<div class="tally">${r.checked} of ${r.total} criteria met &middot; missing more than one means the previous level is the better fit</div>`;
+    html += `<div class="tally">${r.checked} of ${r.total} criteria met (${pct}%) &middot; 70% or more is a pass at this level</div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>`;
   }
   if(r.missed.length){
@@ -444,7 +482,7 @@ function renderResult(){
   body.innerHTML = html;
 
   if(!manualLevelOverride){
-    assessorLevelIdx = suggestedLevelIdx(r.missedCount);
+    assessorLevelIdx = suggestedLevelIdx(r.pct);
   }
   renderLevelPicker(r);
 }
@@ -460,7 +498,7 @@ function renderLevelPicker(r){
     el.appendChild(chip);
   });
   const note = document.getElementById("overrideNote");
-  const suggestedIdx = suggestedLevelIdx(r.missedCount);
+  const suggestedIdx = suggestedLevelIdx(r.pct);
   note.textContent = manualLevelOverride
     ? `Manually set to ${LEVELS[assessorLevelIdx].name} — checklist suggested ${LEVELS[suggestedIdx].name}`
     : `Auto-suggested from the checklist. Tap a level to set your own call.`;
@@ -544,7 +582,8 @@ async function saveEvaluation(){
     identifying_notes: document.getElementById("otherId").value.trim() || null,
     determined_level_id: LEVELS[assessorLevelIdx].id,
     determined_level_name: LEVELS[assessorLevelIdx].name,
-    level_overridden: manualLevelOverride
+    level_overridden: manualLevelOverride,
+    category_comments: Object.keys(categoryComments).length ? JSON.stringify(categoryComments) : null
   };
   statusEl.textContent = "Saving...";
   const { error } = await sb.from("evaluations").insert(row);
@@ -553,7 +592,9 @@ async function saveEvaluation(){
   document.getElementById("notes").value = "";
   resetIdFields();
   manualLevelOverride = false;
+  categoryComments = {};
   renderResult();
+  renderCriteria();
   loadHistory();
 }
 
@@ -601,12 +642,21 @@ function renderHistoryList(){
     if(entry.accessories) idParts.push(entry.accessories);
     if(entry.identifying_notes) idParts.push(entry.identifying_notes);
     const detLvl = LEVELS.find(l => l.id === entry.determined_level_id);
+    let commentsHtml = "";
+    if(entry.category_comments){
+      try{
+        const parsed = JSON.parse(entry.category_comments);
+        const lines = Object.entries(parsed).filter(([,v]) => v).map(([k,v]) => `${k}: ${v}`);
+        if(lines.length) commentsHtml = `<div class="meta">${lines.join(" · ")}</div>`;
+      }catch(e){ /* ignore malformed */ }
+    }
     div.innerHTML = `
       <div>
         <div class="name">${entry.player}</div>
         <div class="meta">${dateStr} &middot; by ${entry.assessor_email} &middot; ${entry.checked}/${entry.total} criteria &middot; ${entry.verdict}</div>
         ${idParts.length ? `<div class="meta">${idParts.join(" · ")}</div>` : ""}
         ${entry.notes ? `<div class="meta">${entry.notes}</div>` : ""}
+        ${commentsHtml}
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           <div class="pill"><span class="dot" style="background:${lvl.color}"></span>Assessed at ${entry.level_name}</div>
           ${detLvl ? `<div class="pill"><span class="dot" style="background:${detLvl.color}"></span>Determined: ${entry.determined_level_name}${entry.level_overridden ? " (adjusted)" : ""}</div>` : ""}
