@@ -308,8 +308,8 @@ let selectedAccessories = new Set();
 let assessorLevelIdx = 2;
 let manualLevelOverride = false;
 
-function suggestedLevelIdx(pct){
-  if(pct >= 0.7) return currentLevelIdx;
+function suggestedLevelIdx(missedCount){
+  if(missedCount <= 1) return currentLevelIdx;
   return currentLevelIdx > 0 ? currentLevelIdx - 1 : currentLevelIdx;
 }
 
@@ -414,23 +414,19 @@ function computeResult(){
     });
   });
   const missedCount = total - checked;
-  const pct = total ? checked / total : 0;
   let verdictClass, verdictText;
-  if(total === 0){
-    verdictClass = "at"; verdictText = "No criteria to assess at this level";
-  } else if(pct === 1){
+  if(total === 0){ verdictClass = "at"; verdictText = "No criteria to assess at this level"; }
+  else if(missedCount === 0){
     verdictClass = "ready";
     const next = LEVELS[currentLevelIdx+1];
     verdictText = next ? `Meets all ${lvl.name} criteria — try assessing at ${next.name}` : `Meets all ${lvl.name} criteria — top level`;
-  } else if(pct >= 0.7){
-    verdictClass = "at";
-    verdictText = `At ${lvl.name} level`;
-  } else {
+  } else if(missedCount === 1){ verdictClass = "at"; verdictText = `At ${lvl.name} level`; }
+  else {
     verdictClass = "below";
     const prev = LEVELS[currentLevelIdx-1];
     verdictText = prev ? `Not yet at ${lvl.name} — recommend ${prev.name}` : `Still developing ${lvl.name} skills`;
   }
-  return { total, checked, missedCount, pct, missed, verdictClass, verdictText };
+  return { total, checked, missedCount, missed, verdictClass, verdictText };
 }
 function renderResult(){
   const r = computeResult();
@@ -438,7 +434,7 @@ function renderResult(){
   const pct = r.total ? Math.round((r.checked/r.total)*100) : 0;
   let html = `<div class="verdict ${r.verdictClass}">${r.verdictText}</div>`;
   if(r.total){
-    html += `<div class="tally">${r.checked} of ${r.total} criteria met (${pct}%) &middot; 70% or more is a pass at this level</div>`;
+    html += `<div class="tally">${r.checked} of ${r.total} criteria met &middot; missing more than one means the previous level is the better fit</div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>`;
   }
   if(r.missed.length){
@@ -448,7 +444,7 @@ function renderResult(){
   body.innerHTML = html;
 
   if(!manualLevelOverride){
-    assessorLevelIdx = suggestedLevelIdx(r.pct);
+    assessorLevelIdx = suggestedLevelIdx(r.missedCount);
   }
   renderLevelPicker(r);
 }
@@ -464,7 +460,7 @@ function renderLevelPicker(r){
     el.appendChild(chip);
   });
   const note = document.getElementById("overrideNote");
-  const suggestedIdx = suggestedLevelIdx(r.pct);
+  const suggestedIdx = suggestedLevelIdx(r.missedCount);
   note.textContent = manualLevelOverride
     ? `Manually set to ${LEVELS[assessorLevelIdx].name} — checklist suggested ${LEVELS[suggestedIdx].name}`
     : `Auto-suggested from the checklist. Tap a level to set your own call.`;
