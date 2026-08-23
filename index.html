@@ -19,27 +19,27 @@
   body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
   .app{max-width:640px;margin:0 auto;padding:0 0 48px;}
 
-  /* ---- Config gate ---- */
   #configGate{max-width:420px;margin:60px auto;padding:24px;background:#fff;border:1px solid var(--line);border-radius:14px;}
   #configGate h2{margin-top:0;font-size:16px;}
   #configGate p{font-size:13px;color:var(--ink-soft);line-height:1.5;}
-  #configGate input{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;}
-  #configGate button{width:100%;}
 
-  /* ---- Login ---- */
   #loginScreen{max-width:360px;margin:70px auto;padding:28px 24px;background:#fff;border:1px solid var(--line);border-radius:14px;text-align:center;}
   #loginScreen h1{font-family:Arial Black,Arial,sans-serif;font-size:20px;text-transform:uppercase;color:var(--court-dark);margin-bottom:4px;}
   #loginScreen p.sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;}
   #loginScreen input{width:100%;margin-bottom:10px;padding:11px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:15px;background:var(--surface-2);}
   #loginError{color:var(--warn);font-size:12.5px;margin-top:8px;min-height:16px;}
 
-  /* ---- Ladder header ---- */
-  .ladder-wrap{background:var(--court-dark);padding:14px 16px 14px;position:sticky;top:0;z-index:5;}
+  .header-wrap{background:var(--court-dark);padding:14px 16px 12px;position:sticky;top:0;z-index:5;}
   .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
   .eyebrow{color:#BFE3DC;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin:0;}
   .whoami{color:#BFE3DC;font-size:11.5px;}
   .whoami button{background:none;border:none;color:#fff;text-decoration:underline;font-size:11.5px;padding:0;cursor:pointer;}
-  h1{color:#fff;font-family:Arial Black,Arial,sans-serif;font-weight:900;letter-spacing:-.02em;font-size:22px;margin:0 0 12px;text-transform:uppercase;}
+  h1{color:#fff;font-family:Arial Black,Arial,sans-serif;font-weight:900;letter-spacing:-.02em;font-size:20px;margin:0 0 10px;text-transform:uppercase;}
+  .backlink{color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:6px;}
+  .nav-tabs{display:flex;gap:6px;}
+  .nav-tab{flex:1;text-align:center;padding:9px 6px;border-radius:8px;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.75);background:rgba(255,255,255,.08);cursor:pointer;}
+  .nav-tab.active{background:#fff;color:var(--ink);}
+
   .ladder{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
   .ladder::-webkit-scrollbar{display:none;}
   .rung{flex:1 0 auto;min-width:52px;text-align:center;padding:8px 4px 7px;border-radius:8px;cursor:pointer;border:2px solid transparent;background:rgba(255,255,255,.08);transition:transform .15s ease,background .15s ease;}
@@ -55,11 +55,6 @@
   input[type=text],input[type=email],input[type=password],textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:var(--ink);background:var(--surface-2);}
   input:focus,textarea:focus{outline:2px solid var(--court);outline-offset:1px;background:#fff;}
   textarea{resize:vertical;min-height:60px;}
-
-  .level-banner{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--court-light);}
-  .level-banner .swatch{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:0 0 0 3px #fff inset;}
-  .level-banner .name{font-weight:800;font-size:15px;}
-  .level-banner .sub{font-size:12px;color:var(--ink-soft);}
 
   .cat-block{margin-bottom:14px;}
   .cat-block:last-child{margin-bottom:0;}
@@ -86,33 +81,6 @@
   .missed-list{font-size:13px;color:var(--ink-soft);margin:0;padding-left:18px;}
   .missed-list li{margin-bottom:3px;}
 
-  button{font-family:inherit;font-size:14.5px;font-weight:700;border:none;border-radius:10px;padding:12px 16px;cursor:pointer;}
-  .btn-primary{background:var(--court);color:#fff;width:100%;}
-  .btn-primary:active{background:var(--court-dark);}
-  .btn-ghost{background:transparent;color:var(--warn);padding:6px 10px;font-size:12.5px;}
-
-  .filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-  .filter-row select{flex:1;min-width:120px;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:13px;background:var(--surface-2);}
-
-  .id-group{margin-bottom:14px;}
-  .id-group:last-child{margin-bottom:0;}
-  .chip-row{display:flex;gap:7px;flex-wrap:wrap;}
-  .color-chip{
-    display:flex;align-items:center;gap:6px;
-    padding:7px 11px 7px 7px;border-radius:99px;
-    border:1.5px solid var(--line);background:var(--surface-2);
-    cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink);
-  }
-  .color-chip .swatch{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,0.12) inset;}
-  .color-chip.selected{border-color:var(--court);background:var(--court-light);color:var(--court-dark);}
-  .tog-chip{
-    padding:7px 13px;border-radius:99px;border:1.5px solid var(--line);
-    background:var(--surface-2);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink);
-  }
-  .tog-chip.selected{border-color:var(--court);background:var(--court);color:#fff;}
-  .id-summary{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
-  .id-summary strong{color:var(--ink);}
-
   .level-picker{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-top:8px;scrollbar-width:none;}
   .level-picker::-webkit-scrollbar{display:none;}
   .level-chip{flex:0 0 auto;min-width:50px;text-align:center;padding:7px 4px 6px;border-radius:8px;cursor:pointer;border:2px solid var(--line);background:var(--surface-2);}
@@ -122,23 +90,58 @@
   .level-chip.selected .lbl{color:#fff;}
   .override-note{font-size:11.5px;color:var(--ink-soft);margin-top:7px;}
 
-  .history-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);}
-  .history-item:last-child{border-bottom:none;}
-  .history-item .name{font-weight:700;font-size:14.5px;}
-  .history-item .meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
-  .history-item .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--court-light);color:var(--court-dark);margin-top:5px;}
-  .history-item .pill .dot{width:8px;height:8px;border-radius:50%;}
-  .empty{font-size:13px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  button{font-family:inherit;font-size:14.5px;font-weight:700;border:none;border-radius:10px;padding:12px 16px;cursor:pointer;}
+  .btn-primary{background:var(--court);color:#fff;width:100%;}
+  .btn-primary:active{background:var(--court-dark);}
+  .btn-secondary{background:var(--surface-2);color:var(--ink);width:100%;border:1.5px solid var(--line);}
+  .btn-ghost{background:transparent;color:var(--warn);padding:6px 10px;font-size:12.5px;}
+
+  .id-group{margin-bottom:14px;}
+  .id-group:last-child{margin-bottom:0;}
+  .chip-row{display:flex;gap:7px;flex-wrap:wrap;}
+  .color-chip{display:flex;align-items:center;gap:6px;padding:7px 11px 7px 7px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface-2);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink);}
+  .color-chip .swatch{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,0.12) inset;}
+  .color-chip.selected{border-color:var(--court);background:var(--court-light);color:var(--court-dark);}
+  .tog-chip{padding:7px 13px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface-2);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink);}
+  .tog-chip.selected{border-color:var(--court);background:var(--court);color:#fff;}
+  .id-summary{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
+  .id-summary strong{color:var(--ink);}
+
+  .player-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .player-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;}
+  .player-card:active{background:var(--surface-2);}
+  .player-card .pname{font-weight:800;font-size:14.5px;margin-bottom:4px;}
+  .player-card .pid{font-size:11.5px;color:var(--ink-soft);line-height:1.35;min-height:15px;}
+  .player-card .pcount{font-size:10.5px;font-weight:700;color:var(--court);margin-top:6px;}
+  .empty{font-size:13px;color:var(--ink-soft);text-align:center;padding:14px 0;}
   .status-msg{font-size:12px;color:var(--ink-soft);margin-top:8px;text-align:center;}
+
+  .player-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:var(--court-light);}
+  .player-banner .pname{font-weight:800;font-size:16px;}
+  .player-banner .pid{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+
+  .compare-item{padding:12px 0;border-bottom:1px solid var(--line);}
+  .compare-item:last-child{border-bottom:none;}
+  .compare-item .pname{font-weight:800;font-size:14.5px;}
+  .compare-item .pid{font-size:11.5px;color:var(--ink-soft);margin:2px 0 8px;}
+  .compare-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .compare-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:var(--surface-2);font-size:11.5px;font-weight:700;}
+  .compare-chip .dot{width:9px;height:9px;border-radius:50%;}
+  .mismatch{border:1.5px solid var(--warn);}
+  .mismatch-flag{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;color:var(--warn);text-transform:uppercase;letter-spacing:.04em;}
+
+  .other-evals{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+  .other-evals .oe-item{padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .other-evals .oe-item:last-child{border-bottom:none;}
+
   .hidden{display:none !important;}
 </style>
 </head>
 <body>
 
-<!-- Shown once, on first load, if Supabase keys aren't filled in below -->
 <div id="configGate" class="hidden">
   <h2>Setup needed</h2>
-  <p>This page hasn't been connected to your Supabase project yet. Open this file in a text editor and fill in <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the &lt;script&gt; section, following SETUP-INSTRUCTIONS.md.</p>
+  <p>This page hasn't been connected to your Supabase project yet. Fill in <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the &lt;script&gt; section.</p>
 </div>
 
 <div id="loginScreen" class="hidden">
@@ -151,86 +154,117 @@
 </div>
 
 <div class="app hidden" id="mainApp">
-  <div class="ladder-wrap">
+  <div class="header-wrap">
     <div class="topbar">
       <p class="eyebrow">OPA-APO &middot; League Levels</p>
       <div class="whoami"><span id="whoamiEmail"></span> &middot; <button id="signOutBtn">Sign out</button></div>
     </div>
-    <h1>Player Level Check</h1>
-    <div class="ladder" id="ladder"></div>
+
+    <div id="rosterHeaderTitle">
+      <h1>Player Level Check</h1>
+      <div class="nav-tabs">
+        <div class="nav-tab" id="tabRoster">Roster</div>
+        <div class="nav-tab" id="tabCompare">Compare</div>
+      </div>
+    </div>
+
+    <div id="evaluateHeaderTitle" class="hidden">
+      <div class="backlink" id="backToRoster">&larr; All players</div>
+      <div class="ladder" id="ladder"></div>
+    </div>
+
+    <div id="compareHeaderTitle" class="hidden">
+      <div class="backlink" id="backFromCompare">&larr; All players</div>
+      <h1>Compare Evaluators</h1>
+    </div>
   </div>
 
   <main>
-    <section class="card">
-      <h2>Player &amp; level</h2>
-      <label class="field-label" for="playerName">Player name</label>
-      <input type="text" id="playerName" placeholder="e.g. Sam Tremblay">
-      <div class="level-banner">
-        <div class="swatch" id="bannerSwatch"></div>
+    <!-- ROSTER VIEW -->
+    <section id="viewRoster">
+      <div class="card">
+        <h2>Add a player</h2>
+        <label class="field-label" for="newPlayerName">Player name</label>
+        <input type="text" id="newPlayerName" placeholder="e.g. Sam Tremblay">
+        <div class="id-group" style="margin-top:12px;">
+          <label class="field-label">Shirt colour</label>
+          <div class="chip-row" id="npShirtChips"></div>
+        </div>
+        <div class="id-group">
+          <label class="field-label">Shorts / bottoms colour</label>
+          <div class="chip-row" id="npShortsChips"></div>
+        </div>
+        <div class="id-group">
+          <label class="field-label">Other identifiers</label>
+          <div class="chip-row" id="npAccessoryChips"></div>
+        </div>
+        <div class="id-group">
+          <label class="field-label" for="npOtherId">Anything else distinctive</label>
+          <input type="text" id="npOtherId" placeholder="e.g. red headband, left-handed, tall">
+        </div>
+        <div class="id-summary" id="npIdSummary"></div>
+        <div style="margin-top:12px;">
+          <button class="btn-primary" id="addPlayerBtn">Add to roster</button>
+        </div>
+        <div class="status-msg" id="npStatusMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>Players (tap to evaluate)</h2>
+        <div id="playerGrid"><p class="empty">Loading...</p></div>
+      </div>
+    </section>
+
+    <!-- EVALUATE VIEW -->
+    <section id="viewEvaluate" class="hidden">
+      <div class="player-banner">
         <div>
-          <div class="name" id="bannerName"></div>
-          <div class="sub">Assessing against this level's criteria</div>
+          <div class="pname" id="evalPlayerName"></div>
+          <div class="pid" id="evalPlayerId"></div>
+        </div>
+      </div>
+
+      <div class="card" id="criteriaCard">
+        <h2>Criteria observed in real play</h2>
+        <div id="criteriaBody"></div>
+      </div>
+
+      <div class="card result" id="resultCard">
+        <h2>Result</h2>
+        <div id="resultBody"></div>
+        <label class="field-label" style="margin-top:14px;">Assessor's determined level</label>
+        <div class="level-picker" id="levelPicker"></div>
+        <div class="override-note" id="overrideNote"></div>
+      </div>
+
+      <div class="card">
+        <h2>Notes (optional)</h2>
+        <textarea id="notes" placeholder="Anything specific worth remembering — a weak backhand, great third-shot drop, etc."></textarea>
+        <div style="margin-top:12px;">
+          <button class="btn-primary" id="saveBtn">Save evaluation</button>
+        </div>
+        <div class="status-msg" id="statusMsg"></div>
+
+        <div class="other-evals" id="otherEvalsWrap">
+          <label class="field-label">Other evaluations of this player</label>
+          <div id="otherEvalsBody"><p class="empty">None yet.</p></div>
         </div>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Identify this player</h2>
-      <div class="id-group">
-        <label class="field-label">Shirt colour</label>
-        <div class="chip-row" id="shirtChips"></div>
+    <!-- COMPARE VIEW -->
+    <section id="viewCompare" class="hidden">
+      <div class="card">
+        <h2>Verdicts by player</h2>
+        <div id="compareBody"><p class="empty">Loading...</p></div>
       </div>
-      <div class="id-group">
-        <label class="field-label">Shorts / bottoms colour</label>
-        <div class="chip-row" id="shortsChips"></div>
-      </div>
-      <div class="id-group">
-        <label class="field-label">Other identifiers</label>
-        <div class="chip-row" id="accessoryChips"></div>
-      </div>
-      <div class="id-group">
-        <label class="field-label" for="otherId">Anything else distinctive</label>
-        <input type="text" id="otherId" placeholder="e.g. red headband, left-handed, tall">
-      </div>
-      <div class="id-summary" id="idSummary"></div>
-    </section>
-
-    <section class="card" id="criteriaCard">
-      <h2>Criteria observed in real play</h2>
-      <div id="criteriaBody"></div>
-    </section>
-
-    <section class="card result" id="resultCard">
-      <h2>Result</h2>
-      <div id="resultBody"></div>
-      <label class="field-label" style="margin-top:14px;">Assessor's determined level</label>
-      <div class="level-picker" id="levelPicker"></div>
-      <div class="override-note" id="overrideNote"></div>
-    </section>
-
-    <section class="card">
-      <h2>Notes (optional)</h2>
-      <textarea id="notes" placeholder="Anything specific worth remembering — a weak backhand, great third-shot drop, etc."></textarea>
-      <div style="margin-top:12px;">
-        <button class="btn-primary" id="saveBtn">Save evaluation</button>
-      </div>
-      <div class="status-msg" id="statusMsg"></div>
-    </section>
-
-    <section class="card">
-      <h2>Saved evaluations</h2>
-      <div class="filter-row">
-        <select id="filterAssessor"><option value="">All assessors</option></select>
-        <select id="filterPlayer"><option value="">All players</option></select>
-      </div>
-      <div id="historyBody"><p class="empty">Loading...</p></div>
     </section>
   </main>
 </div>
 
 <script>
 /* =========================================================
-   1) FILL THESE IN — see SETUP-INSTRUCTIONS.md
+   1) FILL THESE IN
    ========================================================= */
 const SUPABASE_URL = "https://wfefudxjnuhkhwsbrjoa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmZWZ1ZHhqbnVoa2h3c2Jyam9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5OTg4NTcsImV4cCI6MjEwMjU3NDg1N30.zuK30U77QUCFCQ01_RMZomdRV9RyHbK1tNkYu7eTvOw";
@@ -291,11 +325,6 @@ const LEVELS = [
     }}
 ];
 
-let sb = null;
-let session = null;
-let currentLevelIdx = 2;
-let checks = {};
-
 const COLOR_OPTIONS = [
   {label:"Black", hex:"#222222"}, {label:"White", hex:"#FFFFFF"},
   {label:"Grey", hex:"#9AA0A6"}, {label:"Navy", hex:"#1F3A5F"},
@@ -305,7 +334,6 @@ const COLOR_OPTIONS = [
   {label:"Pink", hex:"#E06BA0"}, {label:"Teal", hex:"#0E5C56"}
 ];
 const ACCESSORY_OPTIONS = ["Glasses","Hat/Visor","Long sleeves","Knee brace","Ankle brace","Sleeve/arm compression"];
-
 const PRESET_COMMENTS = [
   "Consistent and reliable",
   "Developing well, needs more repetition",
@@ -321,14 +349,25 @@ const PRESET_COMMENTS = [
   "Hesitant / lacks confidence in this area"
 ];
 
+let sb = null;
+let session = null;
+let currentView = "roster";
+
+let players = [];
+let evalCounts = {}; // player_id -> Set of assessor emails who've evaluated them
+let currentPlayer = null;
+
+let currentLevelIdx = 2;
+let checks = {};
 let categoryComments = {};
-
-let selectedShirt = null;
-let selectedShorts = null;
-let selectedAccessories = new Set();
-
 let assessorLevelIdx = 2;
 let manualLevelOverride = false;
+let draftSaveTimer = null;
+let loadingDraft = false;
+
+let newPlayerShirt = null;
+let newPlayerShorts = null;
+let newPlayerAccessories = new Set();
 
 function suggestedLevelIdx(pct){
   if(pct >= 0.7) return currentLevelIdx;
@@ -353,6 +392,15 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("loginBtn").addEventListener("click", doLogin);
   document.getElementById("loginPassword").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
   document.getElementById("signOutBtn").addEventListener("click", () => sb.auth.signOut());
+
+  document.getElementById("tabRoster").addEventListener("click", goToRoster);
+  document.getElementById("tabCompare").addEventListener("click", goToCompare);
+  document.getElementById("backToRoster").addEventListener("click", goToRoster);
+  document.getElementById("backFromCompare").addEventListener("click", goToRoster);
+  document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
+  document.getElementById("npOtherId").addEventListener("input", renderNewPlayerChips);
+  document.getElementById("saveBtn").addEventListener("click", saveEvaluation);
+  document.getElementById("notes").addEventListener("input", scheduleDraftSave);
 });
 
 function showLogin(){
@@ -363,8 +411,8 @@ function showApp(){
   document.getElementById("loginScreen").classList.add("hidden");
   document.getElementById("mainApp").classList.remove("hidden");
   document.getElementById("whoamiEmail").textContent = session.user.email;
-  renderAll();
-  loadHistory();
+  renderNewPlayerChips();
+  goToRoster();
 }
 
 async function doLogin(){
@@ -377,7 +425,151 @@ async function doLogin(){
   if(error) errEl.textContent = error.message;
 }
 
-/* ---------- Rendering (same logic as the single-user version) ---------- */
+/* ---------- View switching ---------- */
+function setView(view){
+  currentView = view;
+  document.getElementById("viewRoster").classList.toggle("hidden", view !== "roster");
+  document.getElementById("viewEvaluate").classList.toggle("hidden", view !== "evaluate");
+  document.getElementById("viewCompare").classList.toggle("hidden", view !== "compare");
+  document.getElementById("rosterHeaderTitle").classList.toggle("hidden", view !== "roster");
+  document.getElementById("evaluateHeaderTitle").classList.toggle("hidden", view !== "evaluate");
+  document.getElementById("compareHeaderTitle").classList.toggle("hidden", view !== "compare");
+  document.getElementById("tabRoster").classList.toggle("active", view === "roster");
+  document.getElementById("tabCompare").classList.toggle("active", view === "compare");
+}
+
+function goToRoster(){
+  flushDraftSave();
+  setView("roster");
+  loadPlayers();
+}
+function goToCompare(){
+  flushDraftSave();
+  setView("compare");
+  loadCompareBoard();
+}
+async function openPlayer(player){
+  flushDraftSave();
+  currentPlayer = player;
+  setView("evaluate");
+  document.getElementById("evalPlayerName").textContent = player.name;
+  const idParts = [];
+  if(player.shirt_color) idParts.push(player.shirt_color + " shirt");
+  if(player.shorts_color) idParts.push(player.shorts_color + " shorts");
+  if(player.accessories) idParts.push(player.accessories);
+  if(player.identifying_notes) idParts.push(player.identifying_notes);
+  document.getElementById("evalPlayerId").textContent = idParts.length ? idParts.join(" · ") : "No identifiers on file";
+  await loadDraftForPlayer(player);
+  loadOtherEvaluations(player);
+}
+
+/* ---------- New player form (roster) ---------- */
+function renderNewPlayerChips(){
+  const shirtEl = document.getElementById("npShirtChips");
+  const shortsEl = document.getElementById("npShortsChips");
+  const accEl = document.getElementById("npAccessoryChips");
+
+  shirtEl.innerHTML = "";
+  COLOR_OPTIONS.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "color-chip" + (newPlayerShirt === c.label ? " selected" : "");
+    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
+    chip.onclick = () => { newPlayerShirt = (newPlayerShirt === c.label) ? null : c.label; renderNewPlayerChips(); };
+    shirtEl.appendChild(chip);
+  });
+  shortsEl.innerHTML = "";
+  COLOR_OPTIONS.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "color-chip" + (newPlayerShorts === c.label ? " selected" : "");
+    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
+    chip.onclick = () => { newPlayerShorts = (newPlayerShorts === c.label) ? null : c.label; renderNewPlayerChips(); };
+    shortsEl.appendChild(chip);
+  });
+  accEl.innerHTML = "";
+  ACCESSORY_OPTIONS.forEach(a => {
+    const chip = document.createElement("div");
+    chip.className = "tog-chip" + (newPlayerAccessories.has(a) ? " selected" : "");
+    chip.textContent = a;
+    chip.onclick = () => {
+      if(newPlayerAccessories.has(a)) newPlayerAccessories.delete(a); else newPlayerAccessories.add(a);
+      renderNewPlayerChips();
+    };
+    accEl.appendChild(chip);
+  });
+
+  const other = document.getElementById("npOtherId").value.trim();
+  const parts = [];
+  if(newPlayerShirt) parts.push(newPlayerShirt + " shirt");
+  if(newPlayerShorts) parts.push(newPlayerShorts + " shorts");
+  if(newPlayerAccessories.size) parts.push([...newPlayerAccessories].join(", "));
+  if(other) parts.push(other);
+  document.getElementById("npIdSummary").innerHTML = parts.length
+    ? `<strong>Identifying as:</strong> ${parts.join(" · ")}`
+    : "Tap the colours and features that match this player.";
+}
+
+async function addPlayer(){
+  const name = document.getElementById("newPlayerName").value.trim();
+  const statusEl = document.getElementById("npStatusMsg");
+  if(!name){ statusEl.textContent = "Enter a player name."; return; }
+  const row = {
+    name,
+    shirt_color: newPlayerShirt,
+    shorts_color: newPlayerShorts,
+    accessories: newPlayerAccessories.size ? [...newPlayerAccessories].join(", ") : null,
+    identifying_notes: document.getElementById("npOtherId").value.trim() || null,
+    created_by: session.user.id
+  };
+  statusEl.textContent = "Adding...";
+  const { error } = await sb.from("players").insert(row);
+  if(error){ statusEl.textContent = "Couldn't add: " + error.message; return; }
+  statusEl.textContent = "Added.";
+  document.getElementById("newPlayerName").value = "";
+  document.getElementById("npOtherId").value = "";
+  newPlayerShirt = null; newPlayerShorts = null; newPlayerAccessories = new Set();
+  renderNewPlayerChips();
+  loadPlayers();
+}
+
+/* ---------- Roster ---------- */
+async function loadPlayers(){
+  const grid = document.getElementById("playerGrid");
+  const { data, error } = await sb.from("players").select("*").order("name");
+  if(error){ grid.innerHTML = `<p class="empty">Couldn't load players.</p>`; return; }
+  players = data || [];
+
+  const { data: evalData } = await sb.from("evaluations").select("player_id, assessor_email");
+  evalCounts = {};
+  (evalData || []).forEach(e => {
+    if(!e.player_id) return;
+    if(!evalCounts[e.player_id]) evalCounts[e.player_id] = new Set();
+    evalCounts[e.player_id].add(e.assessor_email);
+  });
+
+  if(players.length === 0){ grid.innerHTML = `<p class="empty">No players added yet.</p>`; return; }
+  grid.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.className = "player-grid";
+  players.forEach(p => {
+    const idParts = [];
+    if(p.shirt_color) idParts.push(p.shirt_color + " shirt");
+    if(p.shorts_color) idParts.push(p.shorts_color + " shorts");
+    if(p.accessories) idParts.push(p.accessories);
+    const card = document.createElement("div");
+    card.className = "player-card";
+    const count = evalCounts[p.id] ? evalCounts[p.id].size : 0;
+    card.innerHTML = `
+      <div class="pname">${p.name}</div>
+      <div class="pid">${idParts.join(" · ") || "No identifiers"}</div>
+      <div class="pcount">${count} evaluator${count === 1 ? "" : "s"} so far</div>
+    `;
+    card.onclick = () => openPlayer(p);
+    wrap.appendChild(card);
+  });
+  grid.appendChild(wrap);
+}
+
+/* ---------- Evaluate: ladder, criteria, result (per current player) ---------- */
 function renderLadder(){
   const el = document.getElementById("ladder");
   el.innerHTML = "";
@@ -385,15 +577,14 @@ function renderLadder(){
     const rung = document.createElement("div");
     rung.className = "rung" + (i === currentLevelIdx ? " active" : "");
     rung.innerHTML = `<div class="dot" style="background:${lvl.color}"></div><div class="lbl">${lvl.name.split(" —")[0].split(" ")[0]}</div>`;
-    rung.onclick = () => { currentLevelIdx = i; checks = {}; categoryComments = {}; manualLevelOverride = false; renderAll(); };
+    rung.onclick = () => {
+      currentLevelIdx = i; checks = {}; categoryComments = {}; manualLevelOverride = false;
+      renderCriteria(); renderResult(); scheduleDraftSave();
+    };
     el.appendChild(rung);
   });
 }
-function renderBanner(){
-  const lvl = LEVELS[currentLevelIdx];
-  document.getElementById("bannerSwatch").style.background = lvl.color;
-  document.getElementById("bannerName").textContent = lvl.name;
-}
+
 function renderCriteria(){
   const lvl = LEVELS[currentLevelIdx];
   const body = document.getElementById("criteriaBody");
@@ -417,6 +608,7 @@ function renderCriteria(){
         checks[key] = e.target.checked;
         renderCriteria();
         renderResult();
+        scheduleDraftSave();
       });
       block.appendChild(row);
     });
@@ -429,12 +621,14 @@ function renderCriteria(){
     commentWrap.innerHTML = `<label>Comment on ${cat}</label><select class="comment-select">${options.join("")}</select>`;
     commentWrap.querySelector("select").addEventListener("change", (e) => {
       categoryComments[cat] = e.target.value;
+      scheduleDraftSave();
     });
     block.appendChild(commentWrap);
 
     body.appendChild(block);
   });
 }
+
 function computeResult(){
   const lvl = LEVELS[currentLevelIdx];
   let total = 0, checked = 0;
@@ -466,6 +660,7 @@ function computeResult(){
   }
   return { total, checked, missedCount, pct, missed, verdictClass, verdictText };
 }
+
 function renderResult(){
   const r = computeResult();
   const body = document.getElementById("resultBody");
@@ -494,7 +689,7 @@ function renderLevelPicker(r){
     const chip = document.createElement("div");
     chip.className = "level-chip" + (i === assessorLevelIdx ? " selected" : "");
     chip.innerHTML = `<div class="dot" style="background:${lvl.color}"></div><div class="lbl">${lvl.name.split(" —")[0].split(" ")[0]}</div>`;
-    chip.onclick = () => { assessorLevelIdx = i; manualLevelOverride = true; renderResult(); };
+    chip.onclick = () => { assessorLevelIdx = i; manualLevelOverride = true; renderResult(); scheduleDraftSave(); };
     el.appendChild(chip);
   });
   const note = document.getElementById("overrideNote");
@@ -503,83 +698,83 @@ function renderLevelPicker(r){
     ? `Manually set to ${LEVELS[assessorLevelIdx].name} — checklist suggested ${LEVELS[suggestedIdx].name}`
     : `Auto-suggested from the checklist. Tap a level to set your own call.`;
 }
-function renderAll(){ renderLadder(); renderBanner(); renderCriteria(); renderResult(); renderIdChips(); }
 
-function renderIdChips(){
-  const shirtEl = document.getElementById("shirtChips");
-  const shortsEl = document.getElementById("shortsChips");
-  const accEl = document.getElementById("accessoryChips");
+/* ---------- Drafts: auto-save in-progress work per assessor+player ---------- */
+function scheduleDraftSave(){
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(saveDraftNow, 700);
+}
+function flushDraftSave(){
+  clearTimeout(draftSaveTimer);
+  if(currentPlayer) saveDraftNow();
+}
+async function saveDraftNow(){
+  if(loadingDraft || !currentPlayer || !session) return;
+  const row = {
+    assessor_id: session.user.id,
+    player_id: currentPlayer.id,
+    level_id: LEVELS[currentLevelIdx].id,
+    checks: JSON.stringify(checks),
+    category_comments: JSON.stringify(categoryComments),
+    assessor_level_id: LEVELS[assessorLevelIdx].id,
+    manual_override: manualLevelOverride,
+    notes: document.getElementById("notes").value,
+    updated_at: new Date().toISOString()
+  };
+  await sb.from("evaluation_drafts").upsert(row, { onConflict: "assessor_id,player_id" });
+}
+async function loadDraftForPlayer(player){
+  loadingDraft = true;
+  const { data } = await sb.from("evaluation_drafts")
+    .select("*")
+    .eq("assessor_id", session.user.id)
+    .eq("player_id", player.id)
+    .maybeSingle();
 
-  shirtEl.innerHTML = "";
-  COLOR_OPTIONS.forEach(c => {
-    const chip = document.createElement("div");
-    chip.className = "color-chip" + (selectedShirt === c.label ? " selected" : "");
-    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
-    chip.onclick = () => { selectedShirt = (selectedShirt === c.label) ? null : c.label; renderIdChips(); };
-    shirtEl.appendChild(chip);
-  });
-
-  shortsEl.innerHTML = "";
-  COLOR_OPTIONS.forEach(c => {
-    const chip = document.createElement("div");
-    chip.className = "color-chip" + (selectedShorts === c.label ? " selected" : "");
-    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
-    chip.onclick = () => { selectedShorts = (selectedShorts === c.label) ? null : c.label; renderIdChips(); };
-    shortsEl.appendChild(chip);
-  });
-
-  accEl.innerHTML = "";
-  ACCESSORY_OPTIONS.forEach(a => {
-    const chip = document.createElement("div");
-    chip.className = "tog-chip" + (selectedAccessories.has(a) ? " selected" : "");
-    chip.textContent = a;
-    chip.onclick = () => {
-      if(selectedAccessories.has(a)) selectedAccessories.delete(a); else selectedAccessories.add(a);
-      renderIdChips();
-    };
-    accEl.appendChild(chip);
-  });
-
-  const other = document.getElementById("otherId").value.trim();
-  const parts = [];
-  if(selectedShirt) parts.push(selectedShirt + " shirt");
-  if(selectedShorts) parts.push(selectedShorts + " shorts");
-  if(selectedAccessories.size) parts.push([...selectedAccessories].join(", "));
-  if(other) parts.push(other);
-  document.getElementById("idSummary").innerHTML = parts.length
-    ? `<strong>Identifying as:</strong> ${parts.join(" · ")}`
-    : "Tap the colours and features that match this player.";
+  if(data){
+    currentLevelIdx = Math.max(0, LEVELS.findIndex(l => l.id === data.level_id));
+    if(currentLevelIdx < 0) currentLevelIdx = 2;
+    try{ checks = data.checks ? JSON.parse(data.checks) : {}; }catch(e){ checks = {}; }
+    try{ categoryComments = data.category_comments ? JSON.parse(data.category_comments) : {}; }catch(e){ categoryComments = {}; }
+    manualLevelOverride = !!data.manual_override;
+    const foundIdx = LEVELS.findIndex(l => l.id === data.assessor_level_id);
+    assessorLevelIdx = foundIdx >= 0 ? foundIdx : currentLevelIdx;
+    document.getElementById("notes").value = data.notes || "";
+  } else {
+    currentLevelIdx = 2;
+    checks = {};
+    categoryComments = {};
+    manualLevelOverride = false;
+    assessorLevelIdx = 2;
+    document.getElementById("notes").value = "";
+  }
+  loadingDraft = false;
+  renderLadder();
+  renderCriteria();
+  renderResult();
 }
 
-function resetIdFields(){
-  selectedShirt = null;
-  selectedShorts = null;
-  selectedAccessories = new Set();
-  document.getElementById("otherId").value = "";
-  renderIdChips();
-}
-
-/* ---------- Persistence (Supabase, shared across all assessors) ---------- */
+/* ---------- Finalize an evaluation ---------- */
 async function saveEvaluation(){
-  const name = document.getElementById("playerName").value.trim();
   const statusEl = document.getElementById("statusMsg");
-  if(!name){ statusEl.textContent = "Add a player name before saving."; return; }
+  if(!currentPlayer){ statusEl.textContent = "No player selected."; return; }
   const lvl = LEVELS[currentLevelIdx];
   const r = computeResult();
   const row = {
     assessor_id: session.user.id,
     assessor_email: session.user.email,
-    player: name,
+    player: currentPlayer.name,
+    player_id: currentPlayer.id,
     level_id: lvl.id,
     level_name: lvl.name,
     checked: r.checked,
     total: r.total,
     verdict: r.verdictText,
     notes: document.getElementById("notes").value.trim(),
-    shirt_color: selectedShirt,
-    shorts_color: selectedShorts,
-    accessories: selectedAccessories.size ? [...selectedAccessories].join(", ") : null,
-    identifying_notes: document.getElementById("otherId").value.trim() || null,
+    shirt_color: currentPlayer.shirt_color,
+    shorts_color: currentPlayer.shorts_color,
+    accessories: currentPlayer.accessories,
+    identifying_notes: currentPlayer.identifying_notes,
     determined_level_id: LEVELS[assessorLevelIdx].id,
     determined_level_name: LEVELS[assessorLevelIdx].name,
     level_overridden: manualLevelOverride,
@@ -588,96 +783,77 @@ async function saveEvaluation(){
   statusEl.textContent = "Saving...";
   const { error } = await sb.from("evaluations").insert(row);
   if(error){ statusEl.textContent = "Couldn't save: " + error.message; return; }
+
+  await sb.from("evaluation_drafts").delete().eq("assessor_id", session.user.id).eq("player_id", currentPlayer.id);
+
   statusEl.textContent = "Saved.";
-  document.getElementById("notes").value = "";
-  resetIdFields();
-  manualLevelOverride = false;
-  categoryComments = {};
-  renderResult();
-  renderCriteria();
-  loadHistory();
+  setTimeout(() => { goToRoster(); }, 500);
 }
 
-async function loadHistory(){
-  const body = document.getElementById("historyBody");
-  const { data, error } = await sb.from("evaluations").select("*").order("created_at", { ascending: false });
-  if(error){ body.innerHTML = `<p class="empty">Couldn't load saved evaluations.</p>`; return; }
-  if(!data || data.length === 0){ body.innerHTML = `<p class="empty">No evaluations saved yet.</p>`; return; }
-
-  // populate filters
-  const assessorSel = document.getElementById("filterAssessor");
-  const playerSel = document.getElementById("filterPlayer");
-  const assessors = [...new Set(data.map(d => d.assessor_email))].sort();
-  const players = [...new Set(data.map(d => d.player))].sort();
-  const curA = assessorSel.value, curP = playerSel.value;
-  assessorSel.innerHTML = `<option value="">All assessors</option>` + assessors.map(a => `<option value="${a}">${a}</option>`).join("");
-  playerSel.innerHTML = `<option value="">All players</option>` + players.map(p => `<option value="${p}">${p}</option>`).join("");
-  assessorSel.value = curA; playerSel.value = curP;
-  assessorSel.onchange = renderHistoryList;
-  playerSel.onchange = renderHistoryList;
-
-  window._allEvals = data;
-  renderHistoryList();
-}
-
-function renderHistoryList(){
-  const body = document.getElementById("historyBody");
-  const aFilter = document.getElementById("filterAssessor").value;
-  const pFilter = document.getElementById("filterPlayer").value;
-  let data = window._allEvals || [];
-  if(aFilter) data = data.filter(d => d.assessor_email === aFilter);
-  if(pFilter) data = data.filter(d => d.player === pFilter);
-  if(data.length === 0){ body.innerHTML = `<p class="empty">No matching evaluations.</p>`; return; }
+/* ---------- Other evaluators' work on this same player ---------- */
+async function loadOtherEvaluations(player){
+  const body = document.getElementById("otherEvalsBody");
+  const { data, error } = await sb.from("evaluations").select("*").eq("player_id", player.id).order("created_at", { ascending: false });
+  if(error || !data || data.length === 0){ body.innerHTML = `<p class="empty">None yet.</p>`; return; }
   body.innerHTML = "";
   data.forEach(entry => {
-    const lvl = LEVELS.find(l => l.id === entry.level_id) || {color:"#999"};
-    const div = document.createElement("div");
-    div.className = "history-item";
-    const d = new Date(entry.created_at);
-    const dateStr = d.toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
-    const canDelete = session && entry.assessor_id === session.user.id;
-    const idParts = [];
-    if(entry.shirt_color) idParts.push(entry.shirt_color + " shirt");
-    if(entry.shorts_color) idParts.push(entry.shorts_color + " shorts");
-    if(entry.accessories) idParts.push(entry.accessories);
-    if(entry.identifying_notes) idParts.push(entry.identifying_notes);
     const detLvl = LEVELS.find(l => l.id === entry.determined_level_id);
-    let commentsHtml = "";
-    if(entry.category_comments){
-      try{
-        const parsed = JSON.parse(entry.category_comments);
-        const lines = Object.entries(parsed).filter(([,v]) => v).map(([k,v]) => `${k}: ${v}`);
-        if(lines.length) commentsHtml = `<div class="meta">${lines.join(" · ")}</div>`;
-      }catch(e){ /* ignore malformed */ }
-    }
-    div.innerHTML = `
-      <div>
-        <div class="name">${entry.player}</div>
-        <div class="meta">${dateStr} &middot; by ${entry.assessor_email} &middot; ${entry.checked}/${entry.total} criteria &middot; ${entry.verdict}</div>
-        ${idParts.length ? `<div class="meta">${idParts.join(" · ")}</div>` : ""}
-        ${entry.notes ? `<div class="meta">${entry.notes}</div>` : ""}
-        ${commentsHtml}
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <div class="pill"><span class="dot" style="background:${lvl.color}"></span>Assessed at ${entry.level_name}</div>
-          ${detLvl ? `<div class="pill"><span class="dot" style="background:${detLvl.color}"></span>Determined: ${entry.determined_level_name}${entry.level_overridden ? " (adjusted)" : ""}</div>` : ""}
-        </div>
-      </div>
-      ${canDelete ? `<button class="btn-ghost" data-id="${entry.id}">Delete</button>` : ""}
-    `;
-    if(canDelete){
-      div.querySelector("button").addEventListener("click", async (e) => {
-        await sb.from("evaluations").delete().eq("id", e.target.getAttribute("data-id"));
-        loadHistory();
-      });
-    }
+    const div = document.createElement("div");
+    div.className = "oe-item";
+    const d = new Date(entry.created_at);
+    const dateStr = d.toLocaleDateString(undefined, {month:"short", day:"numeric"});
+    div.innerHTML = `<strong>${entry.assessor_email}</strong> &middot; ${dateStr} &middot; ${detLvl ? detLvl.name : entry.level_name} ${entry.level_overridden ? "(adjusted)" : ""}`;
     body.appendChild(div);
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("saveBtn").addEventListener("click", saveEvaluation);
-  document.getElementById("otherId").addEventListener("input", renderIdChips);
-});
+/* ---------- Compare board ---------- */
+async function loadCompareBoard(){
+  const body = document.getElementById("compareBody");
+  body.innerHTML = `<p class="empty">Loading...</p>`;
+  const { data, error } = await sb.from("evaluations").select("*").order("created_at", { ascending: false });
+  if(error){ body.innerHTML = `<p class="empty">Couldn't load evaluations.</p>`; return; }
+  if(!data || data.length === 0){ body.innerHTML = `<p class="empty">No evaluations saved yet.</p>`; return; }
+
+  // group by player_id (fallback to player name for legacy rows without player_id)
+  const groups = {};
+  data.forEach(e => {
+    const key = e.player_id || ("name:" + (e.player || "").trim().toLowerCase());
+    if(!groups[key]) groups[key] = { name: e.player, idParts: [], byAssessor: {} };
+    const idParts = [];
+    if(e.shirt_color) idParts.push(e.shirt_color + " shirt");
+    if(e.shorts_color) idParts.push(e.shorts_color + " shorts");
+    if(e.accessories) idParts.push(e.accessories);
+    if(idParts.length) groups[key].idParts = idParts;
+    // keep only the most recent evaluation per assessor (data is already sorted desc)
+    if(!groups[key].byAssessor[e.assessor_email]){
+      groups[key].byAssessor[e.assessor_email] = e;
+    }
+  });
+
+  const keys = Object.keys(groups).sort((a,b) => (groups[a].name||"").localeCompare(groups[b].name||""));
+  body.innerHTML = "";
+  keys.forEach(key => {
+    const g = groups[key];
+    const assessments = Object.entries(g.byAssessor);
+    const levelIds = [...new Set(assessments.map(([,e]) => e.determined_level_id || e.level_id))];
+    const mismatch = levelIds.length > 1;
+
+    const div = document.createElement("div");
+    div.className = "compare-item" + (mismatch ? " mismatch" : "");
+    let rowHtml = `<div class="pname">${g.name}</div>`;
+    if(g.idParts.length) rowHtml += `<div class="pid">${g.idParts.join(" · ")}</div>`;
+    rowHtml += `<div class="compare-row">`;
+    assessments.forEach(([email, e]) => {
+      const lvl = LEVELS.find(l => l.id === (e.determined_level_id || e.level_id)) || {color:"#999", name: e.level_name};
+      rowHtml += `<div class="compare-chip"><span class="dot" style="background:${lvl.color}"></span>${email.split("@")[0]}: ${e.determined_level_name || e.level_name}</div>`;
+    });
+    rowHtml += `</div>`;
+    if(mismatch) rowHtml += `<div class="mismatch-flag">Evaluators disagree — worth discussing</div>`;
+    div.innerHTML = rowHtml;
+    body.appendChild(div);
+  });
+}
 </script>
 </body>
 </html>
