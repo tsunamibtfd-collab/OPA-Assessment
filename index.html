@@ -229,6 +229,18 @@
       </div>
 
       <div class="card">
+        <h2>Bulk add players for a session</h2>
+        <label class="field-label" for="bulkLocation">Session</label>
+        <select id="bulkLocation"><option value="">— Select session —</option></select>
+        <label class="field-label" style="margin-top:12px;" for="bulkNames">Player names (one per line)</label>
+        <textarea id="bulkNames" placeholder="Sam Tremblay&#10;Alex Nguyen&#10;Jordan Lee" style="min-height:110px;"></textarea>
+        <div style="margin-top:12px;">
+          <button class="btn-primary" id="bulkAddBtn">Add all to roster</button>
+        </div>
+        <div class="status-msg" id="bulkStatusMsg"></div>
+      </div>
+
+      <div class="card">
         <h2>Players (tap to evaluate)</h2>
         <div class="filter-bar">
           <select id="rosterLocationFilter">
@@ -480,6 +492,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("backToRoster").addEventListener("click", goToRoster);
   document.getElementById("backFromCompare").addEventListener("click", goToRoster);
   document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
+  document.getElementById("bulkAddBtn").addEventListener("click", bulkAddPlayers);
   document.getElementById("npOtherId").addEventListener("input", renderNewPlayerChips);
   document.getElementById("saveBtn").addEventListener("click", saveEvaluation);
   document.getElementById("notes").addEventListener("input", scheduleDraftSave);
@@ -509,6 +522,7 @@ function showApp(){
 function populateLocationDropdowns(){
   const options = SESSIONS.map(l => `<option value="${l}">${l}</option>`).join("");
   document.getElementById("newPlayerLocation").innerHTML = `<option value="">— Select session —</option>` + options;
+  document.getElementById("bulkLocation").innerHTML = `<option value="">— Select session —</option>` + options;
   document.getElementById("rosterLocationFilter").innerHTML = `<option value="">All sessions</option>` + options;
   document.getElementById("compareLocationFilter").innerHTML = `<option value="">All sessions</option>` + options;
 }
@@ -629,6 +643,26 @@ async function addPlayer(){
   document.getElementById("npOtherId").value = "";
   newPlayerShirt = null; newPlayerShorts = null; newPlayerAccessories = new Set();
   renderNewPlayerChips();
+  loadPlayers();
+}
+
+async function bulkAddPlayers(){
+  const statusEl = document.getElementById("bulkStatusMsg");
+  const loc = document.getElementById("bulkLocation").value;
+  const raw = document.getElementById("bulkNames").value;
+  const names = raw.split("\n").map(n => n.trim()).filter(Boolean);
+  if(!loc){ statusEl.textContent = "Select a session first."; return; }
+  if(names.length === 0){ statusEl.textContent = "Enter at least one name."; return; }
+  statusEl.textContent = `Adding ${names.length} player${names.length === 1 ? "" : "s"}...`;
+  const rows = names.map(name => ({
+    name,
+    location: loc,
+    created_by: session.user.id
+  }));
+  const { error } = await sb.from("players").insert(rows);
+  if(error){ statusEl.textContent = "Couldn't add: " + error.message; return; }
+  statusEl.textContent = `Added ${names.length} player${names.length === 1 ? "" : "s"}.`;
+  document.getElementById("bulkNames").value = "";
   loadPlayers();
 }
 
