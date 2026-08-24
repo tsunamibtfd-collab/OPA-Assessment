@@ -258,6 +258,39 @@
           <div class="pname" id="evalPlayerName"></div>
           <div class="pid" id="evalPlayerId"></div>
         </div>
+        <button class="btn-ghost" id="editPlayerBtn" style="color:var(--court);white-space:nowrap;">Edit</button>
+      </div>
+
+      <div class="card hidden" id="editPlayerCard">
+        <h2>Edit player details</h2>
+        <label class="field-label" for="epName">Player name</label>
+        <input type="text" id="epName">
+        <div class="id-group" style="margin-top:12px;">
+          <label class="field-label" for="epLocation">Session</label>
+          <select id="epLocation"><option value="">— Select session —</option></select>
+        </div>
+        <div class="id-group" style="margin-top:12px;">
+          <label class="field-label">Shirt colour</label>
+          <div class="chip-row" id="epShirtChips"></div>
+        </div>
+        <div class="id-group">
+          <label class="field-label">Shorts / bottoms colour</label>
+          <div class="chip-row" id="epShortsChips"></div>
+        </div>
+        <div class="id-group">
+          <label class="field-label">Other identifiers</label>
+          <div class="chip-row" id="epAccessoryChips"></div>
+        </div>
+        <div class="id-group">
+          <label class="field-label" for="epOtherId">Anything else distinctive</label>
+          <input type="text" id="epOtherId">
+        </div>
+        <div class="id-summary" id="epIdSummary"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn-secondary" id="epCancelBtn">Cancel</button>
+          <button class="btn-primary" id="epSaveBtn">Save details</button>
+        </div>
+        <div class="status-msg" id="epStatusMsg"></div>
       </div>
 
       <div class="card" id="criteriaCard">
@@ -463,6 +496,10 @@ let newPlayerShirt = null;
 let newPlayerShorts = null;
 let newPlayerAccessories = new Set();
 
+let editShirt = null;
+let editShorts = null;
+let editAccessories = new Set();
+
 function suggestedLevelIdx(pct){
   if(pct >= 0.7) return currentLevelIdx;
   return currentLevelIdx > 0 ? currentLevelIdx - 1 : currentLevelIdx;
@@ -493,6 +530,10 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("backFromCompare").addEventListener("click", goToRoster);
   document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
   document.getElementById("bulkAddBtn").addEventListener("click", bulkAddPlayers);
+  document.getElementById("editPlayerBtn").addEventListener("click", openEditPlayer);
+  document.getElementById("epCancelBtn").addEventListener("click", () => document.getElementById("editPlayerCard").classList.add("hidden"));
+  document.getElementById("epSaveBtn").addEventListener("click", savePlayerEdits);
+  document.getElementById("epOtherId").addEventListener("input", renderEditChips);
   document.getElementById("npOtherId").addEventListener("input", renderNewPlayerChips);
   document.getElementById("saveBtn").addEventListener("click", saveEvaluation);
   document.getElementById("notes").addEventListener("input", scheduleDraftSave);
@@ -564,6 +605,13 @@ async function openPlayer(player){
   flushDraftSave();
   currentPlayer = player;
   setView("evaluate");
+  document.getElementById("editPlayerCard").classList.add("hidden");
+  renderPlayerBanner(player);
+  await loadDraftForPlayer(player);
+  loadOtherEvaluations(player);
+}
+
+function renderPlayerBanner(player){
   document.getElementById("evalPlayerName").textContent = player.name;
   const idParts = [];
   if(player.location) idParts.push(player.location);
@@ -572,8 +620,87 @@ async function openPlayer(player){
   if(player.accessories) idParts.push(player.accessories);
   if(player.identifying_notes) idParts.push(player.identifying_notes);
   document.getElementById("evalPlayerId").textContent = idParts.length ? idParts.join(" · ") : "No identifiers on file";
-  await loadDraftForPlayer(player);
-  loadOtherEvaluations(player);
+}
+
+/* ---------- Edit player details ---------- */
+function openEditPlayer(){
+  if(!currentPlayer) return;
+  document.getElementById("epName").value = currentPlayer.name || "";
+  document.getElementById("epLocation").innerHTML = `<option value="">— Select session —</option>` +
+    SESSIONS.map(l => `<option value="${l}"${currentPlayer.location === l ? " selected" : ""}>${l}</option>`).join("");
+  document.getElementById("epOtherId").value = currentPlayer.identifying_notes || "";
+  editShirt = currentPlayer.shirt_color || null;
+  editShorts = currentPlayer.shorts_color || null;
+  editAccessories = new Set(currentPlayer.accessories ? currentPlayer.accessories.split(",").map(s => s.trim()).filter(Boolean) : []);
+  renderEditChips();
+  document.getElementById("editPlayerCard").classList.remove("hidden");
+}
+
+function renderEditChips(){
+  const shirtEl = document.getElementById("epShirtChips");
+  const shortsEl = document.getElementById("epShortsChips");
+  const accEl = document.getElementById("epAccessoryChips");
+
+  shirtEl.innerHTML = "";
+  COLOR_OPTIONS.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "color-chip" + (editShirt === c.label ? " selected" : "");
+    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
+    chip.onclick = () => { editShirt = (editShirt === c.label) ? null : c.label; renderEditChips(); };
+    shirtEl.appendChild(chip);
+  });
+  shortsEl.innerHTML = "";
+  COLOR_OPTIONS.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "color-chip" + (editShorts === c.label ? " selected" : "");
+    chip.innerHTML = `<span class="swatch" style="background:${c.hex}"></span>${c.label}`;
+    chip.onclick = () => { editShorts = (editShorts === c.label) ? null : c.label; renderEditChips(); };
+    shortsEl.appendChild(chip);
+  });
+  accEl.innerHTML = "";
+  ACCESSORY_OPTIONS.forEach(a => {
+    const chip = document.createElement("div");
+    chip.className = "tog-chip" + (editAccessories.has(a) ? " selected" : "");
+    chip.textContent = a;
+    chip.onclick = () => {
+      if(editAccessories.has(a)) editAccessories.delete(a); else editAccessories.add(a);
+      renderEditChips();
+    };
+    accEl.appendChild(chip);
+  });
+
+  const other = document.getElementById("epOtherId").value.trim();
+  const parts = [];
+  if(editShirt) parts.push(editShirt + " shirt");
+  if(editShorts) parts.push(editShorts + " shorts");
+  if(editAccessories.size) parts.push([...editAccessories].join(", "));
+  if(other) parts.push(other);
+  document.getElementById("epIdSummary").innerHTML = parts.length
+    ? `<strong>Identifying as:</strong> ${parts.join(" · ")}`
+    : "Tap the colours and features that match this player.";
+}
+
+async function savePlayerEdits(){
+  const statusEl = document.getElementById("epStatusMsg");
+  const name = document.getElementById("epName").value.trim();
+  if(!name){ statusEl.textContent = "Player name can't be empty."; return; }
+  const updates = {
+    name,
+    location: document.getElementById("epLocation").value || null,
+    shirt_color: editShirt,
+    shorts_color: editShorts,
+    accessories: editAccessories.size ? [...editAccessories].join(", ") : null,
+    identifying_notes: document.getElementById("epOtherId").value.trim() || null
+  };
+  statusEl.textContent = "Saving...";
+  const { error } = await sb.from("players").update(updates).eq("id", currentPlayer.id);
+  if(error){ statusEl.textContent = "Couldn't save: " + error.message; return; }
+  currentPlayer = { ...currentPlayer, ...updates };
+  const idx = players.findIndex(p => p.id === currentPlayer.id);
+  if(idx >= 0) players[idx] = currentPlayer;
+  renderPlayerBanner(currentPlayer);
+  statusEl.textContent = "Saved.";
+  setTimeout(() => { document.getElementById("editPlayerCard").classList.add("hidden"); }, 400);
 }
 
 /* ---------- New player form (roster) ---------- */
