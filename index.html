@@ -192,8 +192,7 @@
         <input type="text" id="newPlayerName" placeholder="e.g. Sam Tremblay">
         <div class="id-group" style="margin-top:12px;">
           <label class="field-label" for="newPlayerLocation">Location / court</label>
-          <input type="text" id="newPlayerLocation" list="locationOptions" placeholder="e.g. Bell Arena, Court 3">
-          <datalist id="locationOptions"></datalist>
+          <select id="newPlayerLocation"><option value="">— Select location —</option></select>
         </div>
         <div class="id-group" style="margin-top:12px;">
           <label class="field-label">Shirt colour</label>
@@ -368,6 +367,20 @@ const PRESET_COMMENTS = [
   "Hesitant / lacks confidence in this area"
 ];
 
+const LOCATIONS = [
+  "École élémentaire catholique Saint-Rémi — 100 Walden Dr, Kanata",
+  "École élémentaire catholique Bernard-Grandmaître — 4170 Spratt Rd, Gloucester",
+  "École élémentaire catholique Saint-Joseph d'Orléans — 6664 Carrière St, Ottawa",
+  "Fairgrounds — 2065A Robertson Road, Bells Corners",
+  "The Forge — 1680 Vimont Ct #103, Orléans",
+  "Elementary School Catholic Jonathan-Pitre — 925 Ralph Hennessy Ave, Gloucester",
+  "École élémentaire catholique Arc-en-ciel — 1830 Portobello Blvd, Orléans",
+  "Rideau Community Hub — 815 St Laurent Blvd, Ottawa",
+  "Elementary School Catholic Horizon-Jeunesse — 235 McArthur Ave, Vanier",
+  "Hintonburg Community Centre — 1064 Wellington St. W, Ottawa",
+  "École élémentaire catholique Saint-Jean-Paul II — 5473 Abbott St E, Stittsville"
+];
+
 let sb = null;
 let session = null;
 let currentView = "roster";
@@ -441,7 +454,15 @@ function showApp(){
   document.getElementById("mainApp").classList.remove("hidden");
   document.getElementById("whoamiEmail").textContent = session.user.email;
   renderNewPlayerChips();
+  populateLocationDropdowns();
   goToRoster();
+}
+
+function populateLocationDropdowns(){
+  const options = LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join("");
+  document.getElementById("newPlayerLocation").innerHTML = `<option value="">— Select location —</option>` + options;
+  document.getElementById("rosterLocationFilter").innerHTML = `<option value="">All locations</option>` + options;
+  document.getElementById("compareLocationFilter").innerHTML = `<option value="">All locations</option>` + options;
 }
 
 async function doLogin(){
@@ -578,18 +599,8 @@ async function loadPlayers(){
     evalCounts[e.player_id].add(e.assessor_email);
   });
 
-  const locations = [...new Set(players.map(p => p.location).filter(Boolean))].sort();
-  const rosterSel = document.getElementById("rosterLocationFilter");
-  const compareSel = document.getElementById("compareLocationFilter");
-  const curRoster = rosterSel.value, curCompare = compareSel.value;
-  rosterSel.innerHTML = `<option value="">All locations</option>` + locations.map(l => `<option value="${l}">${l}</option>`).join("");
-  compareSel.innerHTML = `<option value="">All locations</option>` + locations.map(l => `<option value="${l}">${l}</option>`).join("");
-  rosterSel.value = curRoster; compareSel.value = curCompare;
-  rosterLocationFilter = rosterSel.value;
-  compareLocationFilter = compareSel.value;
-
-  const datalist = document.getElementById("locationOptions");
-  datalist.innerHTML = locations.map(l => `<option value="${l}">`).join("");
+  rosterLocationFilter = document.getElementById("rosterLocationFilter").value;
+  compareLocationFilter = document.getElementById("compareLocationFilter").value;
 
   renderPlayerGrid();
 }
