@@ -112,7 +112,11 @@
   .player-card:active{background:var(--surface-2);}
   .player-card .pname{font-weight:800;font-size:14.5px;margin-bottom:4px;}
   .player-card .pid{font-size:11.5px;color:var(--ink-soft);line-height:1.35;min-height:15px;}
+  .player-card .ploc{display:inline-block;font-size:10px;font-weight:800;color:var(--court-dark);background:var(--court-light);padding:2px 7px;border-radius:99px;margin-top:5px;}
   .player-card .pcount{font-size:10.5px;font-weight:700;color:var(--court);margin-top:6px;}
+
+  .filter-bar{margin-bottom:12px;}
+  .filter-bar select{width:100%;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:13.5px;background:var(--surface-2);color:var(--ink);font-family:inherit;}
   .empty{font-size:13px;color:var(--ink-soft);text-align:center;padding:14px 0;}
   .status-msg{font-size:12px;color:var(--ink-soft);margin-top:8px;text-align:center;}
 
@@ -187,6 +191,11 @@
         <label class="field-label" for="newPlayerName">Player name</label>
         <input type="text" id="newPlayerName" placeholder="e.g. Sam Tremblay">
         <div class="id-group" style="margin-top:12px;">
+          <label class="field-label" for="newPlayerLocation">Location / court</label>
+          <input type="text" id="newPlayerLocation" list="locationOptions" placeholder="e.g. Bell Arena, Court 3">
+          <datalist id="locationOptions"></datalist>
+        </div>
+        <div class="id-group" style="margin-top:12px;">
           <label class="field-label">Shirt colour</label>
           <div class="chip-row" id="npShirtChips"></div>
         </div>
@@ -211,6 +220,11 @@
 
       <div class="card">
         <h2>Players (tap to evaluate)</h2>
+        <div class="filter-bar">
+          <select id="rosterLocationFilter">
+            <option value="">All locations</option>
+          </select>
+        </div>
         <div id="playerGrid"><p class="empty">Loading...</p></div>
       </div>
     </section>
@@ -256,6 +270,11 @@
     <section id="viewCompare" class="hidden">
       <div class="card">
         <h2>Verdicts by player</h2>
+        <div class="filter-bar">
+          <select id="compareLocationFilter">
+            <option value="">All locations</option>
+          </select>
+        </div>
         <div id="compareBody"><p class="empty">Loading...</p></div>
       </div>
     </section>
@@ -356,6 +375,8 @@ let currentView = "roster";
 let players = [];
 let evalCounts = {}; // player_id -> Set of assessor emails who've evaluated them
 let currentPlayer = null;
+let rosterLocationFilter = "";
+let compareLocationFilter = "";
 
 let currentLevelIdx = 2;
 let checks = {};
@@ -401,6 +422,14 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("npOtherId").addEventListener("input", renderNewPlayerChips);
   document.getElementById("saveBtn").addEventListener("click", saveEvaluation);
   document.getElementById("notes").addEventListener("input", scheduleDraftSave);
+  document.getElementById("rosterLocationFilter").addEventListener("change", (e) => {
+    rosterLocationFilter = e.target.value;
+    renderPlayerGrid();
+  });
+  document.getElementById("compareLocationFilter").addEventListener("change", (e) => {
+    compareLocationFilter = e.target.value;
+    renderCompareBoard();
+  });
 });
 
 function showLogin(){
@@ -454,6 +483,7 @@ async function openPlayer(player){
   setView("evaluate");
   document.getElementById("evalPlayerName").textContent = player.name;
   const idParts = [];
+  if(player.location) idParts.push(player.location);
   if(player.shirt_color) idParts.push(player.shirt_color + " shirt");
   if(player.shorts_color) idParts.push(player.shorts_color + " shorts");
   if(player.accessories) idParts.push(player.accessories);
@@ -514,6 +544,7 @@ async function addPlayer(){
   if(!name){ statusEl.textContent = "Enter a player name."; return; }
   const row = {
     name,
+    location: document.getElementById("newPlayerLocation").value.trim() || null,
     shirt_color: newPlayerShirt,
     shorts_color: newPlayerShorts,
     accessories: newPlayerAccessories.size ? [...newPlayerAccessories].join(", ") : null,
@@ -525,6 +556,7 @@ async function addPlayer(){
   if(error){ statusEl.textContent = "Couldn't add: " + error.message; return; }
   statusEl.textContent = "Added.";
   document.getElementById("newPlayerName").value = "";
+  document.getElementById("newPlayerLocation").value = "";
   document.getElementById("npOtherId").value = "";
   newPlayerShirt = null; newPlayerShorts = null; newPlayerAccessories = new Set();
   renderNewPlayerChips();
@@ -546,11 +578,30 @@ async function loadPlayers(){
     evalCounts[e.player_id].add(e.assessor_email);
   });
 
-  if(players.length === 0){ grid.innerHTML = `<p class="empty">No players added yet.</p>`; return; }
+  const locations = [...new Set(players.map(p => p.location).filter(Boolean))].sort();
+  const rosterSel = document.getElementById("rosterLocationFilter");
+  const compareSel = document.getElementById("compareLocationFilter");
+  const curRoster = rosterSel.value, curCompare = compareSel.value;
+  rosterSel.innerHTML = `<option value="">All locations</option>` + locations.map(l => `<option value="${l}">${l}</option>`).join("");
+  compareSel.innerHTML = `<option value="">All locations</option>` + locations.map(l => `<option value="${l}">${l}</option>`).join("");
+  rosterSel.value = curRoster; compareSel.value = curCompare;
+  rosterLocationFilter = rosterSel.value;
+  compareLocationFilter = compareSel.value;
+
+  const datalist = document.getElementById("locationOptions");
+  datalist.innerHTML = locations.map(l => `<option value="${l}">`).join("");
+
+  renderPlayerGrid();
+}
+
+function renderPlayerGrid(){
+  const grid = document.getElementById("playerGrid");
+  const filtered = rosterLocationFilter ? players.filter(p => p.location === rosterLocationFilter) : players;
+  if(filtered.length === 0){ grid.innerHTML = `<p class="empty">No players ${rosterLocationFilter ? "at this location" : "added"} yet.</p>`; return; }
   grid.innerHTML = "";
   const wrap = document.createElement("div");
   wrap.className = "player-grid";
-  players.forEach(p => {
+  filtered.forEach(p => {
     const idParts = [];
     if(p.shirt_color) idParts.push(p.shirt_color + " shirt");
     if(p.shorts_color) idParts.push(p.shorts_color + " shorts");
@@ -561,6 +612,7 @@ async function loadPlayers(){
     card.innerHTML = `
       <div class="pname">${p.name}</div>
       <div class="pid">${idParts.join(" · ") || "No identifiers"}</div>
+      ${p.location ? `<div class="ploc">${p.location}</div>` : ""}
       <div class="pcount">${count} evaluator${count === 1 ? "" : "s"} so far</div>
     `;
     card.onclick = () => openPlayer(p);
@@ -808,30 +860,43 @@ async function loadOtherEvaluations(player){
 }
 
 /* ---------- Compare board ---------- */
+let compareRawData = [];
+
 async function loadCompareBoard(){
   const body = document.getElementById("compareBody");
   body.innerHTML = `<p class="empty">Loading...</p>`;
   const { data, error } = await sb.from("evaluations").select("*").order("created_at", { ascending: false });
   if(error){ body.innerHTML = `<p class="empty">Couldn't load evaluations.</p>`; return; }
-  if(!data || data.length === 0){ body.innerHTML = `<p class="empty">No evaluations saved yet.</p>`; return; }
+  compareRawData = data || [];
+  renderCompareBoard();
+}
+
+function renderCompareBoard(){
+  const body = document.getElementById("compareBody");
+  if(!compareRawData || compareRawData.length === 0){ body.innerHTML = `<p class="empty">No evaluations saved yet.</p>`; return; }
+
+  const playerLocation = {};
+  players.forEach(p => { playerLocation[p.id] = p.location; });
 
   // group by player_id (fallback to player name for legacy rows without player_id)
   const groups = {};
-  data.forEach(e => {
+  compareRawData.forEach(e => {
     const key = e.player_id || ("name:" + (e.player || "").trim().toLowerCase());
-    if(!groups[key]) groups[key] = { name: e.player, idParts: [], byAssessor: {} };
+    const loc = e.player_id ? playerLocation[e.player_id] : null;
+    if(compareLocationFilter && loc !== compareLocationFilter) return;
+    if(!groups[key]) groups[key] = { name: e.player, idParts: [], location: loc, byAssessor: {} };
     const idParts = [];
     if(e.shirt_color) idParts.push(e.shirt_color + " shirt");
     if(e.shorts_color) idParts.push(e.shorts_color + " shorts");
     if(e.accessories) idParts.push(e.accessories);
     if(idParts.length) groups[key].idParts = idParts;
-    // keep only the most recent evaluation per assessor (data is already sorted desc)
     if(!groups[key].byAssessor[e.assessor_email]){
       groups[key].byAssessor[e.assessor_email] = e;
     }
   });
 
   const keys = Object.keys(groups).sort((a,b) => (groups[a].name||"").localeCompare(groups[b].name||""));
+  if(keys.length === 0){ body.innerHTML = `<p class="empty">No evaluations at this location yet.</p>`; return; }
   body.innerHTML = "";
   keys.forEach(key => {
     const g = groups[key];
@@ -841,7 +906,7 @@ async function loadCompareBoard(){
 
     const div = document.createElement("div");
     div.className = "compare-item" + (mismatch ? " mismatch" : "");
-    let rowHtml = `<div class="pname">${g.name}</div>`;
+    let rowHtml = `<div class="pname">${g.name}${g.location ? ` <span class="ploc">${g.location}</span>` : ""}</div>`;
     if(g.idParts.length) rowHtml += `<div class="pid">${g.idParts.join(" · ")}</div>`;
     rowHtml += `<div class="compare-row">`;
     assessments.forEach(([email, e]) => {
