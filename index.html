@@ -202,8 +202,8 @@
         <label class="field-label" for="newPlayerName">Player name</label>
         <input type="text" id="newPlayerName" placeholder="e.g. Sam Tremblay">
         <div class="id-group" style="margin-top:12px;">
-          <label class="field-label" for="newPlayerLocation">Location / court</label>
-          <select id="newPlayerLocation"><option value="">— Select location —</option></select>
+          <label class="field-label" for="newPlayerLocation">Session</label>
+          <select id="newPlayerLocation"><option value="">— Select session —</option></select>
         </div>
         <div class="id-group" style="margin-top:12px;">
           <label class="field-label">Shirt colour</label>
@@ -232,7 +232,7 @@
         <h2>Players (tap to evaluate)</h2>
         <div class="filter-bar">
           <select id="rosterLocationFilter">
-            <option value="">All locations</option>
+            <option value="">All sessions</option>
           </select>
         </div>
         <div id="playerGrid"><p class="empty">Loading...</p></div>
@@ -282,7 +282,7 @@
         <h2>Verdicts by player</h2>
         <div class="filter-bar">
           <select id="compareLocationFilter">
-            <option value="">All locations</option>
+            <option value="">All sessions</option>
           </select>
         </div>
         <div id="compareBody"><p class="empty">Loading...</p></div>
@@ -378,19 +378,56 @@ const PRESET_COMMENTS = [
   "Hesitant / lacks confidence in this area"
 ];
 
-const LOCATIONS = [
-  "École élémentaire catholique Saint-Rémi — 100 Walden Dr, Kanata",
-  "École élémentaire catholique Bernard-Grandmaître — 4170 Spratt Rd, Gloucester",
-  "École élémentaire catholique Saint-Joseph d'Orléans — 6664 Carrière St, Ottawa",
-  "Fairgrounds — 2065A Robertson Road, Bells Corners",
-  "The Forge — 1680 Vimont Ct #103, Orléans",
-  "Elementary School Catholic Jonathan-Pitre — 925 Ralph Hennessy Ave, Gloucester",
-  "École élémentaire catholique Arc-en-ciel — 1830 Portobello Blvd, Orléans",
-  "Rideau Community Hub — 815 St Laurent Blvd, Ottawa",
-  "Elementary School Catholic Horizon-Jeunesse — 235 McArthur Ave, Vanier",
-  "Hintonburg Community Centre — 1064 Wellington St. W, Ottawa",
-  "École élémentaire catholique Saint-Jean-Paul II — 5473 Abbott St E, Stittsville"
+const SESSIONS = [
+  "Mon Sep 21 · 6:30 - 9:00 pm — SR Indigo League",
+  "Mon Sep 21 · 6:30 - 9:00 pm — BG Blue League",
+  "Mon Sep 21 · 6:30 - 9:00 pm — SJO Blue League",
+  "Mon Sep 21 · noon - 2:00 pm — FG Green League",
+  "Mon Sep 21 · 2:00 - 4:00 pm — FG Blue League",
+  "Tue Sep 22 · 10:00 - noon — Forge Yellow League",
+  "Tue Sep 22 · 6:00 - 8:30 pm — JP Green League",
+  "Tue Sep 22 · 6:00 - 8:30 pm — Arc Indigo League",
+  "Tue Sep 22 · 2:00 - 4:00 pm — FG Green League",
+  "Tue Sep 22 · Morning (10-noon) — RH Indigo Skills",
+  "Tue Sep 22 · Afternoon (noon - 2:00) — RH Blue Skills",
+  "Wed Sep 23 · 6:30 - 9:00 pm — HJ Yellow League",
+  "Wed Sep 23 · 6:00 - 8:30 pm — JP Blue League",
+  "Wed Sep 23 · 6:30 - 9:00 pm — SJO Green League",
+  "Wed Sep 23 · Afternoon (noon - 2:00) — RH Indigo League",
+  "Wed Sep 23 · noon - 2:00 pm — Forge Green League",
+  "Thu Sep 24 · 2:00 - 4:00 pm — FG Yellow League",
+  "Thu Sep 24 · 6:00 - 8:30 pm — Arc Blue League",
+  "Thu Sep 24 · noon - 2:00 pm — FG Blue League",
+  "Thu Sep 24 · 9:30 - 12:30 pm — HB Indigo League",
+  "Thu Sep 24 · 12:30 - 3:00 pm — HB Green League",
+  "Thu Sep 24 · Morning (10-noon) — RH Blue League",
+  "Fri Sep 25 · noon - 2:00 pm — FG Indigo League",
+  "Fri Sep 25 · Morning (10-noon) — RH Green League",
+  "Fri Sep 25 · Afternoon (noon - 2:00) — RH Blue League",
+  "Sat Sep 26 · 11:00 - 1:00 pm — SJP Green League",
+  "Sat Sep 26 · 1:00 - 3:00 pm — SJP Blue League",
+  "Sat Sep 26 · 3:00 - 5:00 pm — HJ Indigo Skills",
+  "Sun Sep 27 · noon - 2:00 pm — FG Yellow League",
+  "Sun Sep 27 · 2:30 - 5:00 pm — HJ Green Skills",
+  "Sun Sep 27 · noon - 2:30 pm — HJ Blue Skills",
+  "Tue Sep 29 · noon - 2:00 pm — FG Orange League",
+  "Sat Oct 3 · noon - 2:00 pm — FG Orange League",
+  "Sun Oct 4 · 9:00 - 11:00 am — Forge Orange League"
 ];
+
+const SESSION_VENUES = {
+  "SR": "École élémentaire catholique Saint-Rémi — 100 Walden Dr, Kanata",
+  "BG": "École élémentaire catholique Bernard-Grandmaître — 4170 Spratt Rd, Gloucester",
+  "SJO": "École élémentaire catholique Saint-Joseph d'Orléans — 6664 Carrière St, Ottawa",
+  "FG": "Fairgrounds — 2065A Robertson Road, Bells Corners",
+  "Forge": "The Forge — 1680 Vimont Ct #103, Orléans",
+  "JP": "Elementary School Catholic Jonathan-Pitre — 925 Ralph Hennessy Ave, Gloucester",
+  "Arc": "École élémentaire catholique Arc-en-ciel — 1830 Portobello Blvd, Orléans",
+  "RH": "Rideau Community Hub — 815 St Laurent Blvd, Ottawa",
+  "HJ": "Elementary School Catholic Horizon-Jeunesse — 235 McArthur Ave, Vanier",
+  "HB": "Hintonburg Community Centre — 1064 Wellington St. W, Ottawa",
+  "SJP": "École élémentaire catholique Saint-Jean-Paul II — 5473 Abbott St E, Stittsville"
+};
 
 let sb = null;
 let session = null;
@@ -470,10 +507,10 @@ function showApp(){
 }
 
 function populateLocationDropdowns(){
-  const options = LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join("");
-  document.getElementById("newPlayerLocation").innerHTML = `<option value="">— Select location —</option>` + options;
-  document.getElementById("rosterLocationFilter").innerHTML = `<option value="">All locations</option>` + options;
-  document.getElementById("compareLocationFilter").innerHTML = `<option value="">All locations</option>` + options;
+  const options = SESSIONS.map(l => `<option value="${l}">${l}</option>`).join("");
+  document.getElementById("newPlayerLocation").innerHTML = `<option value="">— Select session —</option>` + options;
+  document.getElementById("rosterLocationFilter").innerHTML = `<option value="">All sessions</option>` + options;
+  document.getElementById("compareLocationFilter").innerHTML = `<option value="">All sessions</option>` + options;
 }
 
 async function doLogin(){
@@ -619,7 +656,7 @@ async function loadPlayers(){
 function renderPlayerGrid(){
   const grid = document.getElementById("playerGrid");
   const filtered = rosterLocationFilter ? players.filter(p => p.location === rosterLocationFilter) : players;
-  if(filtered.length === 0){ grid.innerHTML = `<p class="empty">No players ${rosterLocationFilter ? "at this location" : "added"} yet.</p>`; return; }
+  if(filtered.length === 0){ grid.innerHTML = `<p class="empty">No players ${rosterLocationFilter ? "in this session" : "added"} yet.</p>`; return; }
   grid.innerHTML = "";
   const wrap = document.createElement("div");
   wrap.className = "player-grid";
@@ -918,7 +955,7 @@ function renderCompareBoard(){
   });
 
   const keys = Object.keys(groups).sort((a,b) => (groups[a].name||"").localeCompare(groups[b].name||""));
-  if(keys.length === 0){ body.innerHTML = `<p class="empty">No evaluations at this location yet.</p>`; return; }
+  if(keys.length === 0){ body.innerHTML = `<p class="empty">No evaluations in this session yet.</p>`; return; }
   body.innerHTML = "";
   keys.forEach(key => {
     const g = groups[key];
