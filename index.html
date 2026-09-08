@@ -150,6 +150,36 @@
   .other-evals .oe-item:last-child{border-bottom:none;}
 
   .hidden{display:none !important;}
+
+  .report-block{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+  .report-header{margin-bottom:10px;}
+  .report-header .rtitle{font-size:16px;font-weight:800;}
+  .report-header .rsub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .report-cat{margin-bottom:12px;}
+  .report-cat .rcat-title{font-size:12.5px;font-weight:800;color:var(--court);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+  .report-cat .rcrit{font-size:13.5px;padding:3px 0;display:flex;gap:8px;align-items:flex-start;}
+  .report-cat .rcrit .mark{flex:none;font-weight:800;}
+  .report-cat .rcrit .mark.yes{color:var(--good);}
+  .report-cat .rcrit .mark.no{color:var(--warn);}
+  .report-cat .rcomment{font-size:12.5px;color:var(--ink-soft);font-style:italic;margin-top:4px;}
+  .report-notes{font-size:13px;margin-top:8px;padding:10px;border-radius:8px;background:var(--surface-2);}
+
+  .growth-item{margin-bottom:14px;}
+  .growth-item .gtext{font-size:13.5px;margin-bottom:5px;}
+  .growth-item .gmeta{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+  .growth-bar{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden;}
+  .growth-bar-fill{height:100%;border-radius:5px;background:var(--warn);}
+
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{position:absolute;top:0;left:0;width:100%;padding:24px;background:#fff;color:#000;}
+    #printArea .rtitle{font-size:20px;font-weight:800;margin-bottom:2px;}
+    #printArea .rsub{font-size:13px;color:#333;margin-bottom:14px;}
+    #printArea .report-block{border-top:1px solid #ccc;padding-top:14px;margin-top:14px;}
+    #printArea .rcat-title{font-size:13px;font-weight:800;text-transform:uppercase;margin:10px 0 5px;}
+    #printArea .rcrit{font-size:13px;padding:2px 0;}
+  }
 </style>
 </head>
 <body>
@@ -180,6 +210,7 @@
       <div class="nav-tabs">
         <div class="nav-tab" id="tabRoster">Roster</div>
         <div class="nav-tab" id="tabCompare">Compare</div>
+        <div class="nav-tab" id="tabReports">Reports</div>
       </div>
     </div>
 
@@ -191,6 +222,11 @@
     <div id="compareHeaderTitle" class="hidden">
       <div class="backlink" id="backFromCompare">&larr; All players</div>
       <h1>Compare Evaluators</h1>
+    </div>
+
+    <div id="reportsHeaderTitle" class="hidden">
+      <div class="backlink" id="backFromReports">&larr; All players</div>
+      <h1>Reports</h1>
     </div>
   </div>
 
@@ -333,7 +369,33 @@
         <div id="compareBody"><p class="empty">Loading...</p></div>
       </div>
     </section>
+
+    <!-- REPORTS VIEW -->
+    <section id="viewReports" class="hidden">
+      <div class="card">
+        <h2>Player report</h2>
+        <label class="field-label" for="reportPlayerSelect">Player</label>
+        <select id="reportPlayerSelect"><option value="">— Select player —</option></select>
+        <div style="margin-top:12px;">
+          <button class="btn-primary" id="generateReportBtn">Generate report</button>
+        </div>
+        <div class="status-msg" id="reportStatusMsg"></div>
+        <div id="playerReportPreview"></div>
+        <div style="margin-top:12px;">
+          <button class="btn-secondary hidden" id="printReportBtn">Print / Save as PDF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Growth areas by level</h2>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin-top:-6px;margin-bottom:10px;">Based on saved evaluations that included full criteria detail.</p>
+        <div class="level-picker" id="growthLevelPicker"></div>
+        <div id="growthAreasBody" style="margin-top:14px;"><p class="empty">Pick a level above.</p></div>
+      </div>
+    </section>
   </main>
+
+  <div id="printArea" class="hidden"></div>
 </div>
 
 <script>
@@ -526,14 +588,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("tabRoster").addEventListener("click", goToRoster);
   document.getElementById("tabCompare").addEventListener("click", goToCompare);
+  document.getElementById("tabReports").addEventListener("click", goToReports);
   document.getElementById("backToRoster").addEventListener("click", goToRoster);
   document.getElementById("backFromCompare").addEventListener("click", goToRoster);
+  document.getElementById("backFromReports").addEventListener("click", goToRoster);
   document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
   document.getElementById("bulkAddBtn").addEventListener("click", bulkAddPlayers);
   document.getElementById("editPlayerBtn").addEventListener("click", openEditPlayer);
   document.getElementById("epCancelBtn").addEventListener("click", () => document.getElementById("editPlayerCard").classList.add("hidden"));
   document.getElementById("epSaveBtn").addEventListener("click", savePlayerEdits);
   document.getElementById("epOtherId").addEventListener("input", renderEditChips);
+  document.getElementById("generateReportBtn").addEventListener("click", generatePlayerReport);
+  document.getElementById("printReportBtn").addEventListener("click", () => window.print());
   document.getElementById("npOtherId").addEventListener("input", renderNewPlayerChips);
   document.getElementById("saveBtn").addEventListener("click", saveEvaluation);
   document.getElementById("notes").addEventListener("input", scheduleDraftSave);
@@ -584,11 +650,21 @@ function setView(view){
   document.getElementById("viewRoster").classList.toggle("hidden", view !== "roster");
   document.getElementById("viewEvaluate").classList.toggle("hidden", view !== "evaluate");
   document.getElementById("viewCompare").classList.toggle("hidden", view !== "compare");
+  document.getElementById("viewReports").classList.toggle("hidden", view !== "reports");
   document.getElementById("rosterHeaderTitle").classList.toggle("hidden", view !== "roster");
   document.getElementById("evaluateHeaderTitle").classList.toggle("hidden", view !== "evaluate");
   document.getElementById("compareHeaderTitle").classList.toggle("hidden", view !== "compare");
+  document.getElementById("reportsHeaderTitle").classList.toggle("hidden", view !== "reports");
   document.getElementById("tabRoster").classList.toggle("active", view === "roster");
   document.getElementById("tabCompare").classList.toggle("active", view === "compare");
+  document.getElementById("tabReports").classList.toggle("active", view === "reports");
+}
+
+function goToReports(){
+  flushDraftSave();
+  setView("reports");
+  populateReportPlayerSelect();
+  renderGrowthLevelPicker();
 }
 
 function goToRoster(){
@@ -1050,7 +1126,8 @@ async function saveEvaluation(){
     determined_level_id: LEVELS[assessorLevelIdx].id,
     determined_level_name: LEVELS[assessorLevelIdx].name,
     level_overridden: manualLevelOverride,
-    category_comments: Object.keys(categoryComments).length ? JSON.stringify(categoryComments) : null
+    category_comments: Object.keys(categoryComments).length ? JSON.stringify(categoryComments) : null,
+    checks_json: JSON.stringify(checks)
   };
   statusEl.textContent = "Saving...";
   const { error } = await sb.from("evaluations").insert(row);
@@ -1075,6 +1152,148 @@ async function loadOtherEvaluations(player){
     const d = new Date(entry.created_at);
     const dateStr = d.toLocaleDateString(undefined, {month:"short", day:"numeric"});
     div.innerHTML = `<strong>${entry.assessor_email}</strong> &middot; ${dateStr} &middot; ${detLvl ? detLvl.name : entry.level_name} ${entry.level_overridden ? "(adjusted)" : ""}`;
+    body.appendChild(div);
+  });
+}
+
+/* ---------- Reports ---------- */
+function populateReportPlayerSelect(){
+  const sel = document.getElementById("reportPlayerSelect");
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">— Select player —</option>` +
+    players.map(p => `<option value="${p.id}">${p.name}${p.location ? " — " + p.location : ""}</option>`).join("");
+  sel.value = cur;
+}
+
+function escapeHtml(str){
+  return (str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+async function generatePlayerReport(){
+  const statusEl = document.getElementById("reportStatusMsg");
+  const playerId = document.getElementById("reportPlayerSelect").value;
+  if(!playerId){ statusEl.textContent = "Select a player first."; return; }
+  statusEl.textContent = "Building report...";
+
+  const player = players.find(p => p.id === playerId);
+  const { data, error } = await sb.from("evaluations").select("*").eq("player_id", playerId).order("created_at", { ascending: false });
+  if(error){ statusEl.textContent = "Couldn't load evaluations."; return; }
+  if(!data || data.length === 0){ statusEl.textContent = "No saved evaluations for this player yet."; document.getElementById("playerReportPreview").innerHTML = ""; document.getElementById("printReportBtn").classList.add("hidden"); return; }
+
+  const idParts = [];
+  if(player.shirt_color) idParts.push(player.shirt_color + " shirt");
+  if(player.shorts_color) idParts.push(player.shorts_color + " shorts");
+  if(player.accessories) idParts.push(player.accessories);
+
+  let html = `
+    <div class="report-header">
+      <div class="rtitle">${escapeHtml(player.name)}</div>
+      <div class="rsub">${player.location ? escapeHtml(player.location) + " · " : ""}${idParts.join(" · ")}</div>
+    </div>
+  `;
+
+  data.forEach(entry => {
+    const lvl = LEVELS.find(l => l.id === entry.level_id);
+    const detLvl = LEVELS.find(l => l.id === entry.determined_level_id);
+    let checks = {};
+    try{ checks = entry.checks_json ? JSON.parse(entry.checks_json) : {}; }catch(e){ checks = {}; }
+    let comments = {};
+    try{ comments = entry.category_comments ? JSON.parse(entry.category_comments) : {}; }catch(e){ comments = {}; }
+    const d = new Date(entry.created_at);
+    const dateStr = d.toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
+
+    html += `<div class="report-block">
+      <div class="rsub"><strong>Evaluated ${dateStr}</strong> by ${escapeHtml(entry.assessor_email)}</div>
+      <div class="rsub">Assessed against <strong>${lvl ? lvl.name : entry.level_name}</strong> &middot; ${entry.checked}/${entry.total} criteria met &middot; Determined level: <strong>${detLvl ? detLvl.name : entry.determined_level_name || "—"}</strong>${entry.level_overridden ? " (assessor adjusted)" : ""}</div>
+    `;
+
+    if(lvl && entry.checks_json){
+      Object.entries(lvl.categories).forEach(([cat, items]) => {
+        if(!items) return;
+        html += `<div class="report-cat"><div class="rcat-title">${escapeHtml(cat)}</div>`;
+        items.forEach((text, idx) => {
+          const met = !!checks[cat+"-"+idx];
+          html += `<div class="rcrit"><span class="mark ${met ? "yes" : "no"}">${met ? "✓" : "—"}</span><span>${escapeHtml(text)}</span></div>`;
+        });
+        if(comments[cat]) html += `<div class="rcomment">${escapeHtml(comments[cat])}</div>`;
+        html += `</div>`;
+      });
+    } else {
+      html += `<div class="rsub" style="font-style:italic;">Detailed criteria weren't recorded for this older evaluation.</div>`;
+    }
+
+    if(entry.notes) html += `<div class="report-notes"><strong>Notes:</strong> ${escapeHtml(entry.notes)}</div>`;
+    html += `</div>`;
+  });
+
+  document.getElementById("playerReportPreview").innerHTML = html;
+  document.getElementById("printArea").innerHTML = html;
+  document.getElementById("printReportBtn").classList.remove("hidden");
+  statusEl.textContent = "";
+}
+
+/* ---------- Growth areas by level ---------- */
+let growthLevelIdx = null;
+
+function renderGrowthLevelPicker(){
+  const el = document.getElementById("growthLevelPicker");
+  el.innerHTML = "";
+  LEVELS.forEach((lvl, i) => {
+    if(!Object.values(lvl.categories).some(c => c)) return; // skip levels with no gradable criteria
+    const chip = document.createElement("div");
+    chip.className = "level-chip" + (i === growthLevelIdx ? " selected" : "");
+    chip.innerHTML = `<div class="dot" style="background:${lvl.color}"></div><div class="lbl">${lvl.name.split(" —")[0].split(" ")[0]}</div>`;
+    chip.onclick = () => { growthLevelIdx = i; renderGrowthLevelPicker(); loadGrowthAreas(i); };
+    el.appendChild(chip);
+  });
+}
+
+async function loadGrowthAreas(levelIdx){
+  const body = document.getElementById("growthAreasBody");
+  body.innerHTML = `<p class="empty">Loading...</p>`;
+  const lvl = LEVELS[levelIdx];
+  const { data, error } = await sb.from("evaluations").select("checks_json").eq("level_id", lvl.id).not("checks_json", "is", null);
+  if(error){ body.innerHTML = `<p class="empty">Couldn't load data.</p>`; return; }
+  if(!data || data.length === 0){ body.innerHTML = `<p class="empty">No evaluations with detailed criteria recorded yet at ${lvl.name}.</p>`; return; }
+
+  const tally = {}; // key: cat|idx -> {met, total, text, cat}
+  Object.entries(lvl.categories).forEach(([cat, items]) => {
+    if(!items) return;
+    items.forEach((text, idx) => { tally[cat+"|"+idx] = { met: 0, total: 0, text, cat }; });
+  });
+
+  let usable = 0;
+  data.forEach(row => {
+    let checks = {};
+    try{ checks = row.checks_json ? JSON.parse(row.checks_json) : {}; }catch(e){ return; }
+    usable++;
+    Object.entries(lvl.categories).forEach(([cat, items]) => {
+      if(!items) return;
+      items.forEach((text, idx) => {
+        const key = cat+"|"+idx;
+        tally[key].total++;
+        if(checks[cat+"-"+idx]) tally[key].met++;
+      });
+    });
+  });
+
+  if(usable === 0){ body.innerHTML = `<p class="empty">No evaluations with detailed criteria recorded yet at ${lvl.name}.</p>`; return; }
+
+  const rows = Object.values(tally).filter(t => t.total > 0).map(t => ({
+    ...t,
+    missRate: (t.total - t.met) / t.total
+  })).sort((a,b) => b.missRate - a.missRate);
+
+  body.innerHTML = `<p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Based on ${usable} evaluation${usable === 1 ? "" : "s"} at ${lvl.name}</p>`;
+  rows.forEach(r => {
+    const pct = Math.round(r.missRate * 100);
+    const div = document.createElement("div");
+    div.className = "growth-item";
+    div.innerHTML = `
+      <div class="gtext">${escapeHtml(r.cat)}: ${escapeHtml(r.text)}</div>
+      <div class="growth-bar"><div class="growth-bar-fill" style="width:${pct}%"></div></div>
+      <div class="gmeta">Not yet demonstrated in ${pct}% of evaluations (${r.total - r.met} of ${r.total})</div>
+    `;
     body.appendChild(div);
   });
 }
