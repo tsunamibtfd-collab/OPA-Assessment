@@ -170,6 +170,16 @@
   .growth-bar{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden;}
   .growth-bar-fill{height:100%;border-radius:5px;background:var(--warn);}
 
+  .ref-level-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .ref-level-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .ref-level-head .dot{width:20px;height:20px;border-radius:50%;flex:none;box-shadow:0 0 0 3px #fff inset;}
+  .ref-level-head .name{font-weight:800;font-size:16px;}
+  .ref-cat{margin-bottom:12px;}
+  .ref-cat:last-child{margin-bottom:0;}
+  .ref-cat .rcat-title{font-size:12.5px;font-weight:800;color:var(--court);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+  .ref-cat ul{margin:0;padding-left:18px;}
+  .ref-cat li{font-size:13.5px;line-height:1.4;margin-bottom:3px;}
+
   @media print{
     body *{visibility:hidden;}
     #printArea, #printArea *{visibility:visible;}
@@ -211,6 +221,7 @@
         <div class="nav-tab" id="tabRoster">Roster</div>
         <div class="nav-tab" id="tabCompare">Compare</div>
         <div class="nav-tab" id="tabReports">Reports</div>
+        <div class="nav-tab" id="tabCriteria">Criteria</div>
       </div>
     </div>
 
@@ -227,6 +238,11 @@
     <div id="reportsHeaderTitle" class="hidden">
       <div class="backlink" id="backFromReports">&larr; All players</div>
       <h1>Reports</h1>
+    </div>
+
+    <div id="criteriaRefHeaderTitle" class="hidden">
+      <div class="backlink" id="backFromCriteriaRef">&larr; All players</div>
+      <h1>Criteria Reference</h1>
     </div>
   </div>
 
@@ -392,6 +408,11 @@
         <div class="level-picker" id="growthLevelPicker"></div>
         <div id="growthAreasBody" style="margin-top:14px;"><p class="empty">Pick a level above.</p></div>
       </div>
+    </section>
+
+    <!-- CRITERIA REFERENCE VIEW -->
+    <section id="viewCriteriaRef" class="hidden">
+      <div id="criteriaRefBody"></div>
     </section>
   </main>
 
@@ -587,9 +608,11 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("tabRoster").addEventListener("click", goToRoster);
   document.getElementById("tabCompare").addEventListener("click", goToCompare);
   document.getElementById("tabReports").addEventListener("click", goToReports);
+  document.getElementById("tabCriteria").addEventListener("click", goToCriteriaRef);
   document.getElementById("backToRoster").addEventListener("click", goToRoster);
   document.getElementById("backFromCompare").addEventListener("click", goToRoster);
   document.getElementById("backFromReports").addEventListener("click", goToRoster);
+  document.getElementById("backFromCriteriaRef").addEventListener("click", goToRoster);
   document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
   document.getElementById("bulkAddBtn").addEventListener("click", bulkAddPlayers);
   document.getElementById("editPlayerBtn").addEventListener("click", openEditPlayer);
@@ -649,13 +672,43 @@ function setView(view){
   document.getElementById("viewEvaluate").classList.toggle("hidden", view !== "evaluate");
   document.getElementById("viewCompare").classList.toggle("hidden", view !== "compare");
   document.getElementById("viewReports").classList.toggle("hidden", view !== "reports");
+  document.getElementById("viewCriteriaRef").classList.toggle("hidden", view !== "criteriaRef");
   document.getElementById("rosterHeaderTitle").classList.toggle("hidden", view !== "roster");
   document.getElementById("evaluateHeaderTitle").classList.toggle("hidden", view !== "evaluate");
   document.getElementById("compareHeaderTitle").classList.toggle("hidden", view !== "compare");
   document.getElementById("reportsHeaderTitle").classList.toggle("hidden", view !== "reports");
+  document.getElementById("criteriaRefHeaderTitle").classList.toggle("hidden", view !== "criteriaRef");
   document.getElementById("tabRoster").classList.toggle("active", view === "roster");
   document.getElementById("tabCompare").classList.toggle("active", view === "compare");
   document.getElementById("tabReports").classList.toggle("active", view === "reports");
+  document.getElementById("tabCriteria").classList.toggle("active", view === "criteriaRef");
+}
+
+function goToCriteriaRef(){
+  flushDraftSave();
+  setView("criteriaRef");
+  renderCriteriaReference();
+}
+
+function renderCriteriaReference(){
+  const body = document.getElementById("criteriaRefBody");
+  body.innerHTML = "";
+  LEVELS.forEach(lvl => {
+    const card = document.createElement("div");
+    card.className = "ref-level-card";
+    let html = `<div class="ref-level-head"><div class="dot" style="background:${lvl.color}"></div><div class="name">${escapeHtml(lvl.name)}</div></div>`;
+    Object.entries(lvl.categories).forEach(([cat, items]) => {
+      html += `<div class="ref-cat"><div class="rcat-title">${escapeHtml(cat)}</div>`;
+      if(!items){
+        html += `<div class="na">Not assessed at this level</div>`;
+      } else {
+        html += `<ul>` + items.map(t => `<li>${escapeHtml(t)}</li>`).join("") + `</ul>`;
+      }
+      html += `</div>`;
+    });
+    card.innerHTML = html;
+    body.appendChild(card);
+  });
 }
 
 function goToReports(){
