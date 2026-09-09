@@ -215,8 +215,8 @@
       <div class="whoami"><span id="whoamiEmail"></span> &middot; <button id="signOutBtn">Sign out</button></div>
     </div>
 
-    <div id="rosterHeaderTitle">
-      <h1>Player Level Check</h1>
+    <div id="tabsHeaderTitle">
+      <h1 id="tabsViewTitle">Player Level Check</h1>
       <div class="nav-tabs">
         <div class="nav-tab" id="tabRoster">Roster</div>
         <div class="nav-tab" id="tabCompare">Compare</div>
@@ -228,21 +228,6 @@
     <div id="evaluateHeaderTitle" class="hidden">
       <div class="backlink" id="backToRoster">&larr; All players</div>
       <div class="ladder" id="ladder"></div>
-    </div>
-
-    <div id="compareHeaderTitle" class="hidden">
-      <div class="backlink" id="backFromCompare">&larr; All players</div>
-      <h1>Compare Evaluators</h1>
-    </div>
-
-    <div id="reportsHeaderTitle" class="hidden">
-      <div class="backlink" id="backFromReports">&larr; All players</div>
-      <h1>Reports</h1>
-    </div>
-
-    <div id="criteriaRefHeaderTitle" class="hidden">
-      <div class="backlink" id="backFromCriteriaRef">&larr; All players</div>
-      <h1>Criteria Reference</h1>
     </div>
   </div>
 
@@ -610,9 +595,6 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("tabReports").addEventListener("click", goToReports);
   document.getElementById("tabCriteria").addEventListener("click", goToCriteriaRef);
   document.getElementById("backToRoster").addEventListener("click", goToRoster);
-  document.getElementById("backFromCompare").addEventListener("click", goToRoster);
-  document.getElementById("backFromReports").addEventListener("click", goToRoster);
-  document.getElementById("backFromCriteriaRef").addEventListener("click", goToRoster);
   document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
   document.getElementById("bulkAddBtn").addEventListener("click", bulkAddPlayers);
   document.getElementById("editPlayerBtn").addEventListener("click", openEditPlayer);
@@ -673,15 +655,15 @@ function setView(view){
   document.getElementById("viewCompare").classList.toggle("hidden", view !== "compare");
   document.getElementById("viewReports").classList.toggle("hidden", view !== "reports");
   document.getElementById("viewCriteriaRef").classList.toggle("hidden", view !== "criteriaRef");
-  document.getElementById("rosterHeaderTitle").classList.toggle("hidden", view !== "roster");
+  document.getElementById("tabsHeaderTitle").classList.toggle("hidden", view === "evaluate");
   document.getElementById("evaluateHeaderTitle").classList.toggle("hidden", view !== "evaluate");
-  document.getElementById("compareHeaderTitle").classList.toggle("hidden", view !== "compare");
-  document.getElementById("reportsHeaderTitle").classList.toggle("hidden", view !== "reports");
-  document.getElementById("criteriaRefHeaderTitle").classList.toggle("hidden", view !== "criteriaRef");
   document.getElementById("tabRoster").classList.toggle("active", view === "roster");
   document.getElementById("tabCompare").classList.toggle("active", view === "compare");
   document.getElementById("tabReports").classList.toggle("active", view === "reports");
   document.getElementById("tabCriteria").classList.toggle("active", view === "criteriaRef");
+
+  const titles = { roster: "Player Level Check", compare: "Compare Evaluators", reports: "Reports", criteriaRef: "Criteria Reference" };
+  if(titles[view]) document.getElementById("tabsViewTitle").textContent = titles[view];
 }
 
 function goToCriteriaRef(){
