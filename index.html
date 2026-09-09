@@ -180,6 +180,13 @@
   .ref-cat ul{margin:0;padding-left:18px;}
   .ref-cat li{font-size:13.5px;line-height:1.4;margin-bottom:3px;}
 
+  .region-heading{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--court-dark);margin:18px 0 8px;}
+  .region-heading:first-child{margin-top:0;}
+  .venue-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .venue-card .vname{font-weight:700;font-size:14px;}
+  .venue-card .vaddr{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .venue-card a.vmap{flex:none;font-size:12px;font-weight:700;color:var(--court);text-decoration:none;padding:7px 12px;border-radius:99px;background:var(--court-light);white-space:nowrap;}
+
   @media print{
     body *{visibility:hidden;}
     #printArea, #printArea *{visibility:visible;}
@@ -222,6 +229,7 @@
         <div class="nav-tab" id="tabCompare">Compare</div>
         <div class="nav-tab" id="tabReports">Reports</div>
         <div class="nav-tab" id="tabCriteria">Criteria</div>
+        <div class="nav-tab" id="tabLocations">Locations</div>
       </div>
     </div>
 
@@ -399,6 +407,11 @@
     <section id="viewCriteriaRef" class="hidden">
       <div id="criteriaRefBody"></div>
     </section>
+
+    <!-- LOCATIONS VIEW -->
+    <section id="viewLocations" class="hidden">
+      <div id="locationsBody"></div>
+    </section>
   </main>
 
   <div id="printArea" class="hidden"></div>
@@ -526,19 +539,32 @@ const SESSIONS = [
   "Sun Oct 4 · 9:00 - 11:00 am — Forge Orange League"
 ];
 
-const SESSION_VENUES = {
-  "SR": "École élémentaire catholique Saint-Rémi — 100 Walden Dr, Kanata",
-  "BG": "École élémentaire catholique Bernard-Grandmaître — 4170 Spratt Rd, Gloucester",
-  "SJO": "École élémentaire catholique Saint-Joseph d'Orléans — 6664 Carrière St, Ottawa",
-  "FG": "Fairgrounds — 2065A Robertson Road, Bells Corners",
-  "Forge": "The Forge — 1680 Vimont Ct #103, Orléans",
-  "JP": "Elementary School Catholic Jonathan-Pitre — 925 Ralph Hennessy Ave, Gloucester",
-  "Arc": "École élémentaire catholique Arc-en-ciel — 1830 Portobello Blvd, Orléans",
-  "RH": "Rideau Community Hub — 815 St Laurent Blvd, Ottawa",
-  "HJ": "Elementary School Catholic Horizon-Jeunesse — 235 McArthur Ave, Vanier",
-  "HB": "Hintonburg Community Centre — 1064 Wellington St. W, Ottawa",
-  "SJP": "École élémentaire catholique Saint-Jean-Paul II — 5473 Abbott St E, Stittsville"
-};
+const LOCATION_DIRECTORY = [
+  { region: "Ottawa Central", venues: [
+    { name: "École élémentaire catholique Saint-François-d'Assise", address: "35 Melrose Ave, Ottawa, ON K1Y 1T8", mapUrl: "https://maps.app.goo.gl/XcArLtDCx41dxQtJ9" },
+    { name: "Elementary School Catholic Horizon-Jeunesse", address: "235 McArthur Ave, Vanier, ON K1L 6P3", mapUrl: "https://maps.app.goo.gl/bLwQFYQdkaKbSpLx5" },
+    { name: "Hintonburg Community Center", address: "1064 Wellington St. W, Ottawa, ON K1Y 2Y3", mapUrl: "https://maps.app.goo.gl/12R2BpS9xxStseNUA" }
+  ]},
+  { region: "Ottawa West", venues: [
+    { name: "École élémentaire catholique Saint-Jean-Paul II", address: "5473 Abbott St E, Stittsville, ON K2S 0A8", mapUrl: "https://maps.app.goo.gl/xGojvq3uDoS1zBT5A" },
+    { name: "École élémentaire catholique Saint-Rémi", address: "100 Walden Dr, Kanata, ON K2K 0G8", mapUrl: "https://maps.app.goo.gl/aUkuLjW3TcWo3hz77" },
+    { name: "Fairgrounds", address: "2065A Roberston Rd, Ottawa, ON K2H 5H9", mapUrl: "https://maps.app.goo.gl/1A9bQ4RGHVZGY3TF7" }
+  ]},
+  { region: "Ottawa South", venues: [
+    { name: "École élémentaire catholique Bernard-Grandmaître", address: "4170 Spratt Rd, Gloucester, ON K1V 0Z5", mapUrl: "https://maps.app.goo.gl/rYtxpZedG9vm7YdB7" },
+    { name: "École élémentaire catholique Jean-Robert-Gauthier", address: "651 Chapman Mills Dr, Nepean, ON K2J 3V1", mapUrl: "https://maps.app.goo.gl/ysghbvUkqSpSpZmSA" },
+    { name: "Elementary School Catholic Jonathan-Pitre", address: "925 Ralph Hennessy Ave, Gloucester, ON K1X 0C3", mapUrl: "https://maps.app.goo.gl/wjUEzd6vgjesTu4X8" },
+    { name: "Wazoson Public School", address: "989 Kilbirnie Drive, Nepean, ON K2J 6E6", mapUrl: "https://maps.app.goo.gl/YgwHTEAmdX753Hb28" }
+  ]},
+  { region: "Ottawa East", venues: [
+    { name: "The Forge", address: "1680 Vimont Ct., Orleans, ON, K4A 3M3", mapUrl: "https://maps.app.goo.gl/wxMg2urygkkyecPh9" },
+    { name: "École élémentaire catholique Saint-Joseph d'Orléans", address: "6664 Carrière St, Ottawa, ON K1C 1J4", mapUrl: "https://maps.app.goo.gl/ncHqMCGFQQ4nb4oR7" },
+    { name: "École élémentaire catholique des Pins", address: "1487 Ridgebrook Dr, Gloucester, ON K1B 4K6", mapUrl: "https://maps.app.goo.gl/wTvYaNgzF4nAcTRC6" },
+    { name: "École élémentaire catholique Arc-en-ciel", address: "1830 Portobello Blvd, Orléans, ON K4A 3T6", mapUrl: "https://maps.app.goo.gl/BzHhhqeDtL7DdHZB8" },
+    { name: "École élémentaire catholique Alain-Fortin", address: "676 Lakeridge Dr, Orléans, ON K4A 0J8", mapUrl: "https://maps.app.goo.gl/BwkHL6NtAfS8dErC9" },
+    { name: "Rideau Community Hub", address: "815 St Laurent Blvd, Ottawa, ON K1K 3A7", mapUrl: "https://maps.app.goo.gl/LiqUbdQtMYq3QyNC8" }
+  ]}
+];
 
 let sb = null;
 let session = null;
@@ -594,6 +620,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("tabCompare").addEventListener("click", goToCompare);
   document.getElementById("tabReports").addEventListener("click", goToReports);
   document.getElementById("tabCriteria").addEventListener("click", goToCriteriaRef);
+  document.getElementById("tabLocations").addEventListener("click", goToLocations);
   document.getElementById("backToRoster").addEventListener("click", goToRoster);
   document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
   document.getElementById("bulkAddBtn").addEventListener("click", bulkAddPlayers);
@@ -655,15 +682,46 @@ function setView(view){
   document.getElementById("viewCompare").classList.toggle("hidden", view !== "compare");
   document.getElementById("viewReports").classList.toggle("hidden", view !== "reports");
   document.getElementById("viewCriteriaRef").classList.toggle("hidden", view !== "criteriaRef");
+  document.getElementById("viewLocations").classList.toggle("hidden", view !== "locations");
   document.getElementById("tabsHeaderTitle").classList.toggle("hidden", view === "evaluate");
   document.getElementById("evaluateHeaderTitle").classList.toggle("hidden", view !== "evaluate");
   document.getElementById("tabRoster").classList.toggle("active", view === "roster");
   document.getElementById("tabCompare").classList.toggle("active", view === "compare");
   document.getElementById("tabReports").classList.toggle("active", view === "reports");
   document.getElementById("tabCriteria").classList.toggle("active", view === "criteriaRef");
+  document.getElementById("tabLocations").classList.toggle("active", view === "locations");
 
-  const titles = { roster: "Player Level Check", compare: "Compare Evaluators", reports: "Reports", criteriaRef: "Criteria Reference" };
+  const titles = { roster: "Player Level Check", compare: "Compare Evaluators", reports: "Reports", criteriaRef: "Criteria Reference", locations: "Locations" };
   if(titles[view]) document.getElementById("tabsViewTitle").textContent = titles[view];
+}
+
+function goToLocations(){
+  flushDraftSave();
+  setView("locations");
+  renderLocationsDirectory();
+}
+
+function renderLocationsDirectory(){
+  const body = document.getElementById("locationsBody");
+  body.innerHTML = "";
+  LOCATION_DIRECTORY.forEach(group => {
+    const heading = document.createElement("div");
+    heading.className = "region-heading";
+    heading.textContent = group.region;
+    body.appendChild(heading);
+    group.venues.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "venue-card";
+      card.innerHTML = `
+        <div>
+          <div class="vname">${escapeHtml(v.name)}</div>
+          <div class="vaddr">${escapeHtml(v.address)}</div>
+        </div>
+        <a class="vmap" href="${v.mapUrl}" target="_blank" rel="noopener">Directions</a>
+      `;
+      body.appendChild(card);
+    });
+  });
 }
 
 function goToCriteriaRef(){
