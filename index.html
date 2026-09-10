@@ -1268,6 +1268,16 @@ async function saveDraftNow(){
   };
   await sb.from("evaluation_drafts").upsert(row, { onConflict: "assessor_id,player_id" });
 }
+function levelIdxFromSession(sessionStr){
+  if(!sessionStr) return 2;
+  const lower = sessionStr.toLowerCase();
+  for(let i = 0; i < LEVELS.length; i++){
+    const word = LEVELS[i].name.split(" —")[0].trim().toLowerCase();
+    if(lower.includes(word)) return i;
+  }
+  return 2;
+}
+
 async function loadDraftForPlayer(player){
   loadingDraft = true;
   const { data } = await sb.from("evaluation_drafts")
@@ -1278,7 +1288,7 @@ async function loadDraftForPlayer(player){
 
   if(data){
     currentLevelIdx = Math.max(0, LEVELS.findIndex(l => l.id === data.level_id));
-    if(currentLevelIdx < 0) currentLevelIdx = 2;
+    if(currentLevelIdx < 0) currentLevelIdx = levelIdxFromSession(player.location);
     try{ checks = data.checks ? JSON.parse(data.checks) : {}; }catch(e){ checks = {}; }
     try{ categoryComments = data.category_comments ? JSON.parse(data.category_comments) : {}; }catch(e){ categoryComments = {}; }
     manualLevelOverride = !!data.manual_override;
@@ -1286,11 +1296,11 @@ async function loadDraftForPlayer(player){
     assessorLevelIdx = foundIdx >= 0 ? foundIdx : currentLevelIdx;
     document.getElementById("notes").value = data.notes || "";
   } else {
-    currentLevelIdx = 2;
+    currentLevelIdx = levelIdxFromSession(player.location);
     checks = {};
     categoryComments = {};
     manualLevelOverride = false;
-    assessorLevelIdx = 2;
+    assessorLevelIdx = currentLevelIdx;
     document.getElementById("notes").value = "";
   }
   loadingDraft = false;
