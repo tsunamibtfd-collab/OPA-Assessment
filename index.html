@@ -119,7 +119,9 @@
   .id-summary strong{color:var(--ink);}
 
   .player-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .player-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;}
+  .player-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;position:relative;}
+  .player-card .remove-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:var(--surface-2);color:var(--warn);border:none;font-size:14px;font-weight:800;line-height:24px;text-align:center;padding:0;cursor:pointer;}
+  .player-card .remove-btn:active{background:var(--warn);color:#fff;}
   .player-card:active{background:var(--surface-2);}
   .player-card .pname{font-weight:800;font-size:14.5px;margin-bottom:4px;}
   .player-card .pid{font-size:11.5px;color:var(--ink-soft);line-height:1.35;min-height:15px;}
@@ -1050,15 +1052,31 @@ function renderPlayerGrid(){
     card.className = "player-card";
     const count = evalCounts[p.id] ? evalCounts[p.id].size : 0;
     card.innerHTML = `
+      <button class="remove-btn" title="Remove player">✕</button>
       <div class="pname">${p.name}</div>
       <div class="pid">${idParts.join(" · ") || "No identifiers"}</div>
       ${p.location ? `<div class="ploc">${p.location}</div>` : ""}
       <div class="pcount">${count} evaluator${count === 1 ? "" : "s"} so far</div>
     `;
-    card.onclick = () => openPlayer(p);
+    card.querySelector(".remove-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      removePlayer(p);
+    });
+    card.addEventListener("click", () => openPlayer(p));
     wrap.appendChild(card);
   });
   grid.appendChild(wrap);
+}
+
+async function removePlayer(p){
+  const count = evalCounts[p.id] ? evalCounts[p.id].size : 0;
+  const warning = count > 0
+    ? `Remove ${p.name}? They have ${count} saved evaluation${count === 1 ? "" : "s"} — those stay on record but will no longer be linked to a roster card.`
+    : `Remove ${p.name} from the roster?`;
+  if(!confirm(warning)) return;
+  const { error } = await sb.from("players").delete().eq("id", p.id);
+  if(error){ alert("Couldn't remove player: " + error.message); return; }
+  loadPlayers();
 }
 
 /* ---------- Evaluate: ladder, criteria, result (per current player) ---------- */
