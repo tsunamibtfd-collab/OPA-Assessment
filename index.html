@@ -37,7 +37,7 @@
   #loginScreen, #nameSetupScreen{max-width:360px;margin:70px auto;padding:28px 24px;background:#fff;border:1px solid var(--line);border-radius:14px;text-align:center;}
   #loginScreen h1, #nameSetupScreen h1{font-family:Arial Black,Arial,sans-serif;font-size:20px;text-transform:uppercase;color:var(--court-dark);margin-bottom:4px;}
   #loginScreen p.sub, #nameSetupScreen p.sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;}
-  #loginScreen input, #nameSetupScreen input{width:100%;margin-bottom:10px;padding:11px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:15px;background:var(--surface-2);}
+  #loginScreen input, #nameSetupScreen input, #nameSetupScreen select{width:100%;margin-bottom:10px;padding:11px 12px;border-radius:9px;border:1.5px solid var(--line);font-size:15px;background:var(--surface-2);}
   #loginError, #nameSetupError{color:var(--warn);font-size:12.5px;margin-top:8px;min-height:16px;}
 
   .header-wrap{background:var(--court-dark);padding:14px 16px 12px;position:sticky;top:0;z-index:5;}
@@ -221,6 +221,7 @@
   <h1>Player Level Check</h1>
   <p class="sub">What's your name? This is shown to other assessors instead of your email.</p>
   <input type="text" id="nameSetupInput" placeholder="e.g. Sarah Thompson" autocomplete="name">
+  <select id="nameSetupSession" style="margin-bottom:10px;"><option value="">Which session are you evaluating today?</option></select>
   <button class="btn-primary" id="nameSetupBtn">Continue</button>
   <div id="nameSetupError"></div>
 </div>
@@ -252,6 +253,12 @@
   <main>
     <!-- ROSTER VIEW -->
     <section id="viewRoster">
+      <div class="card">
+        <h2>My session</h2>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin-top:-6px;margin-bottom:10px;">The Roster tab filters to this by default. Change it any time.</p>
+        <select id="mySessionSelect"><option value="">— Select session —</option></select>
+      </div>
+
       <div class="card">
         <h2>Add a player</h2>
         <label class="field-label" for="newPlayerName">Player name</label>
@@ -653,6 +660,15 @@ window.addEventListener("DOMContentLoaded", () => {
     compareLocationFilter = e.target.value;
     renderCompareBoard();
   });
+  document.getElementById("mySessionSelect").addEventListener("change", (e) => {
+    const val = e.target.value;
+    updateMySession(val);
+    document.getElementById("rosterLocationFilter").value = val;
+    document.getElementById("newPlayerLocation").value = val;
+    document.getElementById("bulkLocation").value = val;
+    rosterLocationFilter = val;
+    renderPlayerGrid();
+  });
 });
 
 function showLogin(){
@@ -663,15 +679,19 @@ function showLogin(){
 
 let profileNames = {}; // assessor_id -> display name
 let myDisplayName = null;
+let myDefaultSession = null;
 
 async function handleAuthedSession(){
   document.getElementById("loginScreen").classList.add("hidden");
-  const { data, error } = await sb.from("assessor_profiles").select("display_name").eq("assessor_id", session.user.id).maybeSingle();
+  const { data, error } = await sb.from("assessor_profiles").select("display_name, default_session").eq("assessor_id", session.user.id).maybeSingle();
   if(!error && data && data.display_name){
     myDisplayName = data.display_name;
+    myDefaultSession = data.default_session || null;
     profileNames[session.user.id] = myDisplayName;
     showApp();
   } else {
+    document.getElementById("nameSetupSession").innerHTML = `<option value="">Which session are you evaluating today?</option>` +
+      SESSIONS.map(l => `<option value="${l}">${l}</option>`).join("");
     document.getElementById("nameSetupScreen").classList.remove("hidden");
     document.getElementById("mainApp").classList.add("hidden");
   }
@@ -679,15 +699,23 @@ async function handleAuthedSession(){
 
 async function saveMyDisplayName(){
   const name = document.getElementById("nameSetupInput").value.trim();
+  const sessionChoice = document.getElementById("nameSetupSession").value;
   const errEl = document.getElementById("nameSetupError");
   if(!name){ errEl.textContent = "Enter your name."; return; }
+  if(!sessionChoice){ errEl.textContent = "Select which session you're evaluating."; return; }
   errEl.textContent = "";
-  const { error } = await sb.from("assessor_profiles").upsert({ assessor_id: session.user.id, display_name: name });
+  const { error } = await sb.from("assessor_profiles").upsert({ assessor_id: session.user.id, display_name: name, default_session: sessionChoice });
   if(error){ errEl.textContent = "Couldn't save: " + error.message; return; }
   myDisplayName = name;
+  myDefaultSession = sessionChoice;
   profileNames[session.user.id] = name;
   document.getElementById("nameSetupScreen").classList.add("hidden");
   showApp();
+}
+
+async function updateMySession(newSession){
+  myDefaultSession = newSession;
+  await sb.from("assessor_profiles").update({ default_session: newSession }).eq("assessor_id", session.user.id);
 }
 
 async function loadProfileNames(){
@@ -704,6 +732,12 @@ function showApp(){
   document.getElementById("whoamiEmail").textContent = myDisplayName || session.user.email.split("@")[0];
   renderNewPlayerChips();
   populateLocationDropdowns();
+  if(myDefaultSession){
+    document.getElementById("rosterLocationFilter").value = myDefaultSession;
+    document.getElementById("newPlayerLocation").value = myDefaultSession;
+    document.getElementById("bulkLocation").value = myDefaultSession;
+    document.getElementById("mySessionSelect").value = myDefaultSession;
+  }
   loadProfileNames();
   goToRoster();
 }
@@ -712,6 +746,7 @@ function populateLocationDropdowns(){
   const options = SESSIONS.map(l => `<option value="${l}">${l}</option>`).join("");
   document.getElementById("newPlayerLocation").innerHTML = `<option value="">— Select session —</option>` + options;
   document.getElementById("bulkLocation").innerHTML = `<option value="">— Select session —</option>` + options;
+  document.getElementById("mySessionSelect").innerHTML = `<option value="">— Select session —</option>` + options;
   document.getElementById("rosterLocationFilter").innerHTML = `<option value="">All sessions</option>` + options;
   document.getElementById("compareLocationFilter").innerHTML = `<option value="">All sessions</option>` + options;
 }
