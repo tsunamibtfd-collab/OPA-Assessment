@@ -44,6 +44,7 @@
   .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
   .eyebrow{color:#BFE3DC;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin:0;}
   .whoami{color:#BFE3DC;font-size:11.5px;}
+  #syncIndicator{font-size:11px;font-weight:700;color:#2B2107;background:#E0AC2A;display:inline-block;padding:4px 10px;border-radius:99px;margin-bottom:8px;}
   .whoami button{background:none;border:none;color:#fff;text-decoration:underline;font-size:11.5px;padding:0;cursor:pointer;}
   h1{color:#fff;font-family:Arial Black,Arial,sans-serif;font-weight:900;letter-spacing:-.02em;font-size:20px;margin:0 0 10px;text-transform:uppercase;}
   .backlink{color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:6px;}
@@ -232,6 +233,7 @@
       <p class="eyebrow">OPA-APO &middot; League Levels</p>
       <div class="whoami"><span id="whoamiEmail"></span> &middot; <button id="signOutBtn">Sign out</button></div>
     </div>
+    <div id="syncIndicator" class="hidden"></div>
 
     <div id="tabsHeaderTitle">
       <h1 id="tabsViewTitle">Player Level Check</h1>
@@ -593,6 +595,128 @@ let currentPlayer = null;
 let rosterLocationFilter = "";
 let compareLocationFilter = "";
 
+/* ==========================================================
+   OFFLINE SUPPORT
+   - Records get a client-generated id, so they're final even
+     before they reach the server.
+   - Writes go through a local queue: applied to the UI right
+     away, pushed to Supabase in the background, kept on the
+     device and retried automatically if there's no connection.
+   ========================================================== */
+function genId(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+}
+
+function lsGet(key, fallback){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+}
+function lsSet(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ /* storage unavailable */ }
+}
+
+function loadQueue(){ return lsGet("opa_pending_ops", []); }
+function saveQueueArr(q){ lsSet("opa_pending_ops", q); updateSyncIndicator(); }
+
+// Queue a write. table/op/payload as usual; opts: {matchColumn, matchValue, onConflict, dedupeKey}
+function queueOp(table, op, payload, opts){
+  opts = opts || {};
+  const q = loadQueue();
+  if(opts.dedupeKey){
+    for(let i = q.length - 1; i >= 0; i--){
+      if(q[i].dedupeKey === opts.dedupeKey) q.splice(i, 1);
+    }
+  }
+  q.push({ _opId: genId(), table, op, payload, matchColumn: opts.matchColumn, matchValue: opts.matchValue, matchColumn2: opts.matchColumn2, matchValue2: opts.matchValue2, onConflict: opts.onConflict, dedupeKey: opts.dedupeKey || null });
+  saveQueueArr(q);
+  trySync();
+}
+
+let syncing = false;
+async function trySync(){
+  if(syncing || !sb || !session) return;
+  syncing = true;
+  let playersSynced = false;
+  try{
+    let q = loadQueue();
+    while(q.length > 0){
+      const item = q[0];
+      let ok = false;
+      try{
+        if(item.op === "insert"){
+          const { error } = await sb.from(item.table).insert(item.payload);
+          ok = !error;
+        } else if(item.op === "update"){
+          let q2 = sb.from(item.table).update(item.payload).eq(item.matchColumn, item.matchValue);
+          if(item.matchColumn2) q2 = q2.eq(item.matchColumn2, item.matchValue2);
+          const { error } = await q2;
+          ok = !error;
+        } else if(item.op === "delete"){
+          let q2 = sb.from(item.table).delete().eq(item.matchColumn, item.matchValue);
+          if(item.matchColumn2) q2 = q2.eq(item.matchColumn2, item.matchValue2);
+          const { error } = await q2;
+          ok = !error;
+        } else if(item.op === "upsert"){
+          const { error } = await sb.from(item.table).upsert(item.payload, { onConflict: item.onConflict });
+          ok = !error;
+        }
+      }catch(e){ ok = false; }
+
+      if(ok){
+        if(item.table === "players") playersSynced = true;
+        q.shift();
+        saveQueueArr(q);
+      } else {
+        break; // stop on first failure — likely offline, retry later
+      }
+    }
+  } finally {
+    syncing = false;
+    if(playersSynced && currentView === "roster"){
+      const { data } = await sb.from("players").select("*").order("name");
+      if(data){ setCachedServerRoster(data); refreshRosterFromCache(); }
+    }
+  }
+}
+
+function pendingCount(){ return loadQueue().length; }
+
+function updateSyncIndicator(){
+  const el = document.getElementById("syncIndicator");
+  if(!el) return;
+  const n = pendingCount();
+  if(n === 0){
+    el.textContent = "";
+    el.classList.add("hidden");
+  } else {
+    el.textContent = `${n} change${n === 1 ? "" : "s"} waiting to sync`;
+    el.classList.remove("hidden");
+  }
+}
+
+window.addEventListener("online", trySync);
+setInterval(trySync, 20000);
+
+/* ---------- Local roster cache (server snapshot + pending ops applied on top) ---------- */
+function getCachedServerRoster(){ return lsGet("opa_cached_roster", []); }
+function setCachedServerRoster(list){ lsSet("opa_cached_roster", list); }
+
+function effectiveRoster(){
+  let list = getCachedServerRoster().slice();
+  const q = loadQueue().filter(item => item.table === "players");
+  q.forEach(item => {
+    if(item.op === "insert"){
+      if(!list.find(p => p.id === item.payload.id)) list.push(item.payload);
+    } else if(item.op === "update"){
+      const idx = list.findIndex(p => p.id === item.matchValue);
+      if(idx >= 0) list[idx] = { ...list[idx], ...item.payload };
+    } else if(item.op === "delete"){
+      list = list.filter(p => p.id !== item.matchValue);
+    }
+  });
+  return list;
+}
+
 let currentLevelIdx = 2;
 let checks = {};
 let categoryComments = {};
@@ -739,6 +863,8 @@ function showApp(){
     document.getElementById("mySessionSelect").value = myDefaultSession;
   }
   loadProfileNames();
+  updateSyncIndicator();
+  trySync();
   goToRoster();
 }
 
@@ -937,7 +1063,7 @@ function renderEditChips(){
     : "Tap the colours and features that match this player.";
 }
 
-async function savePlayerEdits(){
+function savePlayerEdits(){
   const statusEl = document.getElementById("epStatusMsg");
   const name = document.getElementById("epName").value.trim();
   if(!name){ statusEl.textContent = "Player name can't be empty."; return; }
@@ -949,9 +1075,7 @@ async function savePlayerEdits(){
     accessories: editAccessories.size ? [...editAccessories].join(", ") : null,
     identifying_notes: document.getElementById("epOtherId").value.trim() || null
   };
-  statusEl.textContent = "Saving...";
-  const { error } = await sb.from("players").update(updates).eq("id", currentPlayer.id);
-  if(error){ statusEl.textContent = "Couldn't save: " + error.message; return; }
+  queueOp("players", "update", updates, { matchColumn: "id", matchValue: currentPlayer.id, dedupeKey: "player-edit-" + currentPlayer.id });
   currentPlayer = { ...currentPlayer, ...updates };
   const idx = players.findIndex(p => p.id === currentPlayer.id);
   if(idx >= 0) players[idx] = currentPlayer;
@@ -1005,11 +1129,12 @@ function renderNewPlayerChips(){
     : "Tap the colours and features that match this player.";
 }
 
-async function addPlayer(){
+function addPlayer(){
   const name = document.getElementById("newPlayerName").value.trim();
   const statusEl = document.getElementById("npStatusMsg");
   if(!name){ statusEl.textContent = "Enter a player name."; return; }
   const row = {
+    id: genId(),
     name,
     location: document.getElementById("newPlayerLocation").value.trim() || null,
     shirt_color: newPlayerShirt,
@@ -1018,56 +1143,60 @@ async function addPlayer(){
     identifying_notes: document.getElementById("npOtherId").value.trim() || null,
     created_by: session.user.id
   };
-  statusEl.textContent = "Adding...";
-  const { error } = await sb.from("players").insert(row);
-  if(error){ statusEl.textContent = "Couldn't add: " + error.message; return; }
+  queueOp("players", "insert", row);
   statusEl.textContent = "Added.";
   document.getElementById("newPlayerName").value = "";
-  document.getElementById("newPlayerLocation").value = "";
   document.getElementById("npOtherId").value = "";
   newPlayerShirt = null; newPlayerShorts = null; newPlayerAccessories = new Set();
   renderNewPlayerChips();
-  loadPlayers();
+  refreshRosterFromCache();
 }
 
-async function bulkAddPlayers(){
+function bulkAddPlayers(){
   const statusEl = document.getElementById("bulkStatusMsg");
   const loc = document.getElementById("bulkLocation").value;
   const raw = document.getElementById("bulkNames").value;
   const names = raw.split("\n").map(n => n.trim()).filter(Boolean);
   if(!loc){ statusEl.textContent = "Select a session first."; return; }
   if(names.length === 0){ statusEl.textContent = "Enter at least one name."; return; }
-  statusEl.textContent = `Adding ${names.length} player${names.length === 1 ? "" : "s"}...`;
-  const rows = names.map(name => ({
-    name,
-    location: loc,
-    created_by: session.user.id
-  }));
-  const { error } = await sb.from("players").insert(rows);
-  if(error){ statusEl.textContent = "Couldn't add: " + error.message; return; }
+  names.forEach(name => {
+    const row = { id: genId(), name, location: loc, created_by: session.user.id };
+    queueOp("players", "insert", row);
+  });
   statusEl.textContent = `Added ${names.length} player${names.length === 1 ? "" : "s"}.`;
   document.getElementById("bulkNames").value = "";
-  loadPlayers();
+  refreshRosterFromCache();
 }
 
 /* ---------- Roster ---------- */
 async function loadPlayers(){
   const grid = document.getElementById("playerGrid");
   const { data, error } = await sb.from("players").select("*").order("name");
-  if(error){ grid.innerHTML = `<p class="empty">Couldn't load players.</p>`; return; }
-  players = data || [];
+  if(!error && data){
+    setCachedServerRoster(data);
+  } else if(getCachedServerRoster().length === 0){
+    grid.innerHTML = `<p class="empty">Couldn't load players (no connection, and nothing cached on this device yet).</p>`;
+    return;
+  }
 
   const { data: evalData } = await sb.from("evaluations").select("player_id, assessor_email");
-  evalCounts = {};
-  (evalData || []).forEach(e => {
-    if(!e.player_id) return;
-    if(!evalCounts[e.player_id]) evalCounts[e.player_id] = new Set();
-    evalCounts[e.player_id].add(e.assessor_email);
-  });
+  if(evalData){
+    evalCounts = {};
+    evalData.forEach(e => {
+      if(!e.player_id) return;
+      if(!evalCounts[e.player_id]) evalCounts[e.player_id] = new Set();
+      evalCounts[e.player_id].add(e.assessor_email);
+    });
+  }
 
   rosterLocationFilter = document.getElementById("rosterLocationFilter").value;
   compareLocationFilter = document.getElementById("compareLocationFilter").value;
 
+  refreshRosterFromCache();
+}
+
+function refreshRosterFromCache(){
+  players = effectiveRoster();
   renderPlayerGrid();
 }
 
@@ -1103,15 +1232,14 @@ function renderPlayerGrid(){
   grid.appendChild(wrap);
 }
 
-async function removePlayer(p){
+function removePlayer(p){
   const count = evalCounts[p.id] ? evalCounts[p.id].size : 0;
   const warning = count > 0
     ? `Remove ${p.name}? They have ${count} saved evaluation${count === 1 ? "" : "s"} — those stay on record but will no longer be linked to a roster card.`
     : `Remove ${p.name} from the roster?`;
   if(!confirm(warning)) return;
-  const { error } = await sb.from("players").delete().eq("id", p.id);
-  if(error){ alert("Couldn't remove player: " + error.message); return; }
-  loadPlayers();
+  queueOp("players", "delete", null, { matchColumn: "id", matchValue: p.id });
+  refreshRosterFromCache();
 }
 
 /* ---------- Evaluate: ladder, criteria, result (per current player) ---------- */
@@ -1253,6 +1381,8 @@ function flushDraftSave(){
   clearTimeout(draftSaveTimer);
   if(currentPlayer) saveDraftNow();
 }
+function draftCacheKey(assessorId, playerId){ return "opa_draft_" + assessorId + "_" + playerId; }
+
 async function saveDraftNow(){
   if(loadingDraft || !currentPlayer || !session) return;
   const row = {
@@ -1266,7 +1396,8 @@ async function saveDraftNow(){
     notes: document.getElementById("notes").value,
     updated_at: new Date().toISOString()
   };
-  await sb.from("evaluation_drafts").upsert(row, { onConflict: "assessor_id,player_id" });
+  lsSet(draftCacheKey(session.user.id, currentPlayer.id), row);
+  queueOp("evaluation_drafts", "upsert", row, { onConflict: "assessor_id,player_id", dedupeKey: "draft-" + session.user.id + "-" + currentPlayer.id });
 }
 function levelIdxFromSession(sessionStr){
   if(!sessionStr) return 2;
@@ -1280,11 +1411,18 @@ function levelIdxFromSession(sessionStr){
 
 async function loadDraftForPlayer(player){
   loadingDraft = true;
-  const { data } = await sb.from("evaluation_drafts")
-    .select("*")
-    .eq("assessor_id", session.user.id)
-    .eq("player_id", player.id)
-    .maybeSingle();
+  const localData = lsGet(draftCacheKey(session.user.id, player.id), null);
+  let data = localData;
+  try{
+    const { data: remote } = await sb.from("evaluation_drafts")
+      .select("*")
+      .eq("assessor_id", session.user.id)
+      .eq("player_id", player.id)
+      .maybeSingle();
+    if(remote && (!localData || new Date(remote.updated_at) > new Date(localData.updated_at))){
+      data = remote;
+    }
+  }catch(e){ /* offline — use local cache */ }
 
   if(data){
     currentLevelIdx = Math.max(0, LEVELS.findIndex(l => l.id === data.level_id));
@@ -1310,12 +1448,13 @@ async function loadDraftForPlayer(player){
 }
 
 /* ---------- Finalize an evaluation ---------- */
-async function saveEvaluation(){
+function saveEvaluation(){
   const statusEl = document.getElementById("statusMsg");
   if(!currentPlayer){ statusEl.textContent = "No player selected."; return; }
   const lvl = LEVELS[currentLevelIdx];
   const r = computeResult();
   const row = {
+    id: genId(),
     assessor_id: session.user.id,
     assessor_email: session.user.email,
     player: currentPlayer.name,
@@ -1336,14 +1475,12 @@ async function saveEvaluation(){
     category_comments: Object.keys(categoryComments).length ? JSON.stringify(categoryComments) : null,
     checks_json: JSON.stringify(checks)
   };
-  statusEl.textContent = "Saving...";
-  const { error } = await sb.from("evaluations").insert(row);
-  if(error){ statusEl.textContent = "Couldn't save: " + error.message; return; }
+  queueOp("evaluations", "insert", row);
+  queueOp("evaluation_drafts", "delete", null, { matchColumn: "assessor_id", matchValue: session.user.id, matchColumn2: "player_id", matchValue2: currentPlayer.id, dedupeKey: "draft-" + session.user.id + "-" + currentPlayer.id });
+  try{ localStorage.removeItem(draftCacheKey(session.user.id, currentPlayer.id)); }catch(e){}
 
-  await sb.from("evaluation_drafts").delete().eq("assessor_id", session.user.id).eq("player_id", currentPlayer.id);
-
-  statusEl.textContent = "Saved.";
-  setTimeout(() => { goToRoster(); }, 500);
+  statusEl.textContent = pendingCount() > 0 ? "Saved locally — will sync when back online." : "Saved.";
+  setTimeout(() => { goToRoster(); }, 700);
 }
 
 /* ---------- Other evaluators' work on this same player ---------- */
