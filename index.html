@@ -752,9 +752,18 @@ window.addEventListener("DOMContentLoaded", () => {
     session = data.session;
     if(session) handleAuthedSession(); else showLogin();
   });
-  sb.auth.onAuthStateChange((_event, s) => {
+  sb.auth.onAuthStateChange((event, s) => {
     session = s;
-    if(session) handleAuthedSession(); else showLogin();
+    if(event === "SIGNED_OUT"){
+      showLogin();
+    } else if(event === "SIGNED_IN"){
+      if(session) handleAuthedSession();
+    } else if(session){
+      // TOKEN_REFRESHED, USER_UPDATED, etc. — just keep the session current,
+      // don't navigate away from whatever the assessor is doing right now
+    } else {
+      showLogin();
+    }
   });
   document.getElementById("loginBtn").addEventListener("click", doLogin);
   document.getElementById("loginPassword").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
