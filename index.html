@@ -638,8 +638,9 @@ async function trySync(){
   syncing = true;
   let playersSynced = false;
   try{
-    let q = loadQueue();
-    while(q.length > 0){
+    while(true){
+      const q = loadQueue();
+      if(q.length === 0) break;
       const item = q[0];
       let ok = false;
       try{
@@ -664,8 +665,10 @@ async function trySync(){
 
       if(ok){
         if(item.table === "players") playersSynced = true;
-        q.shift();
-        saveQueueArr(q);
+        const freshQ = loadQueue();
+        const idx = freshQ.findIndex(x => x._opId === item._opId);
+        if(idx >= 0) freshQ.splice(idx, 1);
+        saveQueueArr(freshQ);
       } else {
         break; // stop on first failure — likely offline, retry later
       }
