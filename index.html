@@ -81,6 +81,9 @@
   .comment-row{margin-top:8px;padding:0 8px;}
   .comment-row label{display:block;font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
   .comment-select{width:100%;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:13.5px;background:var(--surface-2);color:var(--ink);font-family:inherit;}
+  .comment-chips{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+  .comment-chip{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:var(--court-light);color:var(--court-dark);border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.35;}
+  .comment-chip button{flex:none;background:none;border:none;color:var(--warn);font-size:13px;font-weight:800;padding:0 2px;cursor:pointer;}
   .comment-select:focus{outline:2px solid var(--court);outline-offset:1px;background:#fff;}
 
   .result .verdict{font-size:17px;font-weight:800;margin-bottom:4px;}
@@ -1338,6 +1341,13 @@ function renderLadder(){
   });
 }
 
+// Comments are stored per category as a list (older saved data used a single text value)
+function commentsFor(obj, cat){
+  const v = obj ? obj[cat] : null;
+  if(!v) return [];
+  return Array.isArray(v) ? v : [v];
+}
+
 function renderCriteria(){
   const lvl = LEVELS[currentLevelIdx];
   const body = document.getElementById("criteriaBody");
@@ -1368,15 +1378,29 @@ function renderCriteria(){
 
     const commentWrap = document.createElement("div");
     commentWrap.className = "comment-row";
-    const currentComment = categoryComments[cat] || "";
-    const optionList = (PRESET_COMMENTS_BY_CATEGORY[cat] || PRESET_COMMENTS).slice();
-    // keep any previously saved comment visible even if it is not in the current list
-    if(currentComment && !optionList.includes(currentComment)) optionList.push(currentComment);
-    const options = [`<option value="">— Select a comment —</option>`]
-      .concat(optionList.map(c => `<option value="${escapeHtml(c)}"${currentComment === c ? " selected" : ""}>${escapeHtml(c)}</option>`));
-    commentWrap.innerHTML = `<label>Comment on ${cat}</label><select class="comment-select">${options.join("")}</select>`;
+    const selectedComments = commentsFor(categoryComments, cat);
+    const optionList = (PRESET_COMMENTS_BY_CATEGORY[cat] || PRESET_COMMENTS).filter(x => !selectedComments.includes(x));
+    const options = [`<option value="">${selectedComments.length ? "+ Add another comment" : "— Select a comment —"}</option>`]
+      .concat(optionList.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
+    commentWrap.innerHTML = `<label>Comments on ${cat}</label><select class="comment-select">${options.join("")}</select><div class="comment-chips"></div>`;
+    const chipBox = commentWrap.querySelector(".comment-chips");
+    selectedComments.forEach(txt => {
+      const chip = document.createElement("div");
+      chip.className = "comment-chip";
+      chip.innerHTML = `<span>${escapeHtml(txt)}</span><button type="button" aria-label="Remove comment">✕</button>`;
+      chip.querySelector("button").addEventListener("click", () => {
+        categoryComments[cat] = commentsFor(categoryComments, cat).filter(x => x !== txt);
+        if(categoryComments[cat].length === 0) delete categoryComments[cat];
+        renderCriteria();
+        scheduleDraftSave();
+      });
+      chipBox.appendChild(chip);
+    });
     commentWrap.querySelector("select").addEventListener("change", (e) => {
-      categoryComments[cat] = e.target.value;
+      const val = e.target.value;
+      if(!val) return;
+      categoryComments[cat] = commentsFor(categoryComments, cat).concat([val]);
+      renderCriteria();
       scheduleDraftSave();
     });
     block.appendChild(commentWrap);
@@ -1642,7 +1666,8 @@ async function generatePlayerReport(){
           const met = !!checks[cat+"-"+idx];
           html += `<div class="rcrit"><span class="mark ${met ? "yes" : "no"}">${met ? "✓" : "—"}</span><span>${escapeHtml(text)}</span></div>`;
         });
-        if(comments[cat]) html += `<div class="rcomment">${escapeHtml(comments[cat])}</div>`;
+        const catComments = commentsFor(comments, cat);
+        if(catComments.length) html += `<div class="rcomment">${catComments.map(escapeHtml).join("; ")}</div>`;
         html += `</div>`;
       });
     } else {
