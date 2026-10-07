@@ -511,15 +511,83 @@ const PRESET_COMMENTS = [
   "Developing well, needs more repetition",
   "Strong under pressure",
   "Inconsistent execution",
-  "Excellent shot selection",
   "Not observed during this session",
-  "Exceeds expectations for this level",
-  "Struggles when rushed",
-  "Great court awareness",
-  "Needs to slow down and reset more often",
-  "Good communication with partner",
-  "Hesitant / lacks confidence in this area"
+  "Exceeds expectations for this level"
 ];
+
+// Comments offered in each category's dropdown, based on themes from real assessment comments
+const PRESET_COMMENTS_BY_CATEGORY = {
+  "General Play": [
+    "Athletic, with good hands and reaction time",
+    "Good serve and return, deep and well placed",
+    "Serve or return needs more depth or consistency",
+    "Makes good contact and gets a lot of balls back",
+    "Too many unforced errors",
+    "Swing is too big. A shorter, more compact swing will help",
+    "Too many pop-ups and high balls",
+    "Positive attitude and willing to learn",
+    "Has good potential. Consistency is the next step",
+    "Played better as the session went on",
+    "Consistent and reliable",
+    "Not observed during this session"
+  ],
+  "Positioning": [
+    "Good ready position and court coverage",
+    "Moves well to the NVL after the third shot",
+    "Stays a step or two off the NVL. Needs to move up sooner",
+    "Slow getting to the NVL after the return or third shot",
+    "Backs off the NVL too quickly or too often",
+    "Leaves the middle open or squeezes the middle",
+    "Moves well with partner",
+    "Crowds partner or gets out of sync with partner",
+    "Reactive in transition. Needs to anticipate earlier",
+    "Mobility limits reach on wide or low balls",
+    "Footwork and split step need work",
+    "Good court sense and anticipation"
+  ],
+  "Fast Game": [
+    "Fast hands at the net",
+    "Solid, compact volleys and overheads",
+    "Good drive and attack volley",
+    "Good finishing shots",
+    "Handles pace well",
+    "Pops the ball up when pace picks up",
+    "Struggles with the second pressure shot",
+    "Speeds up too early or at the wrong time",
+    "Attack volleys go into the net. Needs more control",
+    "Reactive on fast balls and stays back",
+    "Relies on one shot (drive or volley)",
+    "Needs to balance the fast game with the soft game"
+  ],
+  "Slow Game": [
+    "Good soft touch and placement",
+    "Good drops and resets",
+    "Dinks with purpose and moves opponents around",
+    "Willing to try the soft game and change the pace",
+    "Pop-ups and high balls. Needs softer hands",
+    "Drops and resets are too high. Needs more arc and control",
+    "Drops, dinks or resets are too flat or too deep",
+    "Dink consistency needs work, especially on the backhand",
+    "Too much wrist leads to pop-ups",
+    "Struggles to reset under pressure",
+    "Limited soft game. Needs to develop drops, dinks and resets",
+    "Good when the game is slow but struggles against pace"
+  ],
+  "Strategy": [
+    "Smart player with good game sense",
+    "Good shot selection",
+    "Uses placement over power",
+    "Patient and builds the point",
+    "Can change the pace of the game",
+    "Goes for too much, especially angles",
+    "Forces the play at the wrong time",
+    "Needs more patience and shot selection",
+    "Speeds up too early and unsuccessfully",
+    "Too many points end on unforced errors",
+    "Needs to keep the ball in play and play percentage shots",
+    "Hasn't changed approach. Needs to try something different"
+  ]
+};
 
 const SESSIONS = [
   "Mon Sep 21 · 6:30 - 9:00 pm — SR Indigo League",
@@ -1301,8 +1369,11 @@ function renderCriteria(){
     const commentWrap = document.createElement("div");
     commentWrap.className = "comment-row";
     const currentComment = categoryComments[cat] || "";
+    const optionList = (PRESET_COMMENTS_BY_CATEGORY[cat] || PRESET_COMMENTS).slice();
+    // keep any previously saved comment visible even if it is not in the current list
+    if(currentComment && !optionList.includes(currentComment)) optionList.push(currentComment);
     const options = [`<option value="">— Select a comment —</option>`]
-      .concat(PRESET_COMMENTS.map(c => `<option value="${c}"${currentComment === c ? " selected" : ""}>${c}</option>`));
+      .concat(optionList.map(c => `<option value="${escapeHtml(c)}"${currentComment === c ? " selected" : ""}>${escapeHtml(c)}</option>`));
     commentWrap.innerHTML = `<label>Comment on ${cat}</label><select class="comment-select">${options.join("")}</select>`;
     commentWrap.querySelector("select").addEventListener("change", (e) => {
       categoryComments[cat] = e.target.value;
