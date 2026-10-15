@@ -246,6 +246,7 @@
         <div class="nav-tab" id="tabReports">Reports</div>
         <div class="nav-tab" id="tabCriteria">Criteria</div>
         <div class="nav-tab" id="tabLocations">Locations</div>
+        <div class="nav-tab" id="tabHelp">Help</div>
       </div>
     </div>
 
@@ -433,6 +434,69 @@
     <!-- LOCATIONS VIEW -->
     <section id="viewLocations" class="hidden">
       <div id="locationsBody"></div>
+    </section>
+
+    <!-- HELP VIEW -->
+    <section id="viewHelp" class="hidden">
+      <style>
+        #helpBody h3{margin:20px 0 6px;font-size:17px}
+        #helpBody p,#helpBody li{line-height:1.5;font-size:14.5px}
+        #helpBody ul,#helpBody ol{padding-left:22px;margin:6px 0}
+        #helpBody li{margin-bottom:4px}
+      </style>
+      <div id="helpBody">
+        <h3>Getting started</h3>
+        <p>Sign in with the email and password from your administrator. The first time, enter the name you want other assessors to see (your email is never shown) and choose your session. To use it like an app, add it to your home screen: on iPhone/iPad open it in Safari, tap Share, then Add to Home Screen; on Android open it in Chrome, tap the menu, then Add to Home screen or Install app.</p>
+        <p>The tabs along the top (Players, Compare, Reports, Criteria, Locations, Help) are always available.</p>
+
+        <h3>Players (the roster)</h3>
+        <ul>
+          <li><b>My session:</b> pick the session you are assessing. You only see the players for your session. New players start at the level named in the session.</li>
+          <li><b>Add a player:</b> type a name and tap Add. <b>Add many:</b> use the bulk box, one name per line.</li>
+          <li><b>Filter:</b> type in the search box to narrow the list.</li>
+          <li><b>Edit identifiers:</b> tap Edit on a player to record shirt colour, shorts colour, accessories and other identifying notes.</li>
+          <li><b>Remove:</b> tap Remove and confirm. Saved evaluations are kept.</li>
+        </ul>
+        <p>Tap a player to start evaluating.</p>
+
+        <h3>Evaluating a player</h3>
+        <ol>
+          <li>Check the level on the ladder at the top; tap another level to assess against it.</li>
+          <li>Tick each criterion the player consistently shows, across the five categories: General Play, Positioning, Fast Game, Slow Game and Strategy.</li>
+          <li>At the bottom of each category, pick comments from the dropdown. You can pick more than one, and remove any with its X.</li>
+          <li>Read the result: 70% or more of criteria met means the player is at this level; 100% suggests the next level up; under 70% recommends the level below.</li>
+          <li>Set the determined level. The result is only a suggestion; you make the final call, and a different choice is recorded as an override.</li>
+          <li>Add notes if needed, then Save. Your evaluation is stored under your name, separate from other assessors' evaluations of the same player.</li>
+        </ol>
+        <p>Your ticks and comments are saved as a draft as you go, so leaving the screen or losing signal does not lose them. Use "&larr; All players" to go back to the roster.</p>
+
+        <h3>Compare</h3>
+        <p>Shows every assessor's evaluation of each player side by side, so the group can settle borderline cases at the end of a session.</p>
+
+        <h3>Reports</h3>
+        <ul>
+          <li><b>Player report:</b> a formatted summary of a player's evaluations, suitable for sharing with the player.</li>
+          <li><b>Print / Save as PDF:</b> use the Print button, then choose Save as PDF to email it.</li>
+          <li><b>Growth areas:</b> the criteria most often missed at each level.</li>
+        </ul>
+
+        <h3>Criteria and Locations</h3>
+        <p>Criteria is a read-only reference of every level and its criteria. Locations lists venues by region with tap-to-open map links.</p>
+
+        <h3>Working offline</h3>
+        <ul>
+          <li>You can add and edit players and complete evaluations with no connection; they are stored on your device.</li>
+          <li>A yellow pill shows how many changes are waiting to upload. They upload automatically when the connection returns, and the pill disappears.</li>
+          <li>Open the app once with internet before you go so the roster is on your device, and do not clear browser data until your changes have synced.</li>
+        </ul>
+
+        <h3>Troubleshooting</h3>
+        <ul>
+          <li><b>Blank page or old version:</b> reload. If it persists, add ?v=2 (then ?v=3 and so on) to the end of the web address.</li>
+          <li><b>Cannot sign in:</b> check for typos, then ask your administrator to confirm or reset your account.</li>
+          <li><b>Not syncing:</b> check you are online and keep the app open for a minute.</li>
+        </ul>
+      </div>
     </section>
   </main>
 
@@ -847,6 +911,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("tabReports").addEventListener("click", goToReports);
   document.getElementById("tabCriteria").addEventListener("click", goToCriteriaRef);
   document.getElementById("tabLocations").addEventListener("click", goToLocations);
+  document.getElementById("tabHelp").addEventListener("click", goToHelp);
   document.getElementById("backToRoster").addEventListener("click", goToRoster);
   document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
   document.getElementById("bulkAddBtn").addEventListener("click", bulkAddPlayers);
@@ -979,6 +1044,7 @@ function setView(view){
   document.getElementById("viewReports").classList.toggle("hidden", view !== "reports");
   document.getElementById("viewCriteriaRef").classList.toggle("hidden", view !== "criteriaRef");
   document.getElementById("viewLocations").classList.toggle("hidden", view !== "locations");
+  document.getElementById("viewHelp").classList.toggle("hidden", view !== "help");
   document.getElementById("tabsHeaderTitle").classList.toggle("hidden", view === "evaluate");
   document.getElementById("evaluateHeaderTitle").classList.toggle("hidden", view !== "evaluate");
   document.getElementById("tabRoster").classList.toggle("active", view === "roster");
@@ -986,9 +1052,15 @@ function setView(view){
   document.getElementById("tabReports").classList.toggle("active", view === "reports");
   document.getElementById("tabCriteria").classList.toggle("active", view === "criteriaRef");
   document.getElementById("tabLocations").classList.toggle("active", view === "locations");
+  document.getElementById("tabHelp").classList.toggle("active", view === "help");
 
-  const titles = { roster: "Player Level Check", compare: "Compare Evaluators", reports: "Reports", criteriaRef: "Criteria Reference", locations: "Locations" };
+  const titles = { roster: "Player Level Check", compare: "Compare Evaluators", reports: "Reports", criteriaRef: "Criteria Reference", locations: "Locations", help: "Help" };
   if(titles[view]) document.getElementById("tabsViewTitle").textContent = titles[view];
+}
+
+function goToHelp(){
+  flushDraftSave();
+  setView("help");
 }
 
 function goToLocations(){
